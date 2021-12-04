@@ -130,10 +130,9 @@ func react(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
 		Title:       e.Emoji.Name + " New Pin",
 		Description: fmt.Sprintf("%s said: %s", m.Author.Mention(), m.Content),
 		URL:         fmt.Sprintf("https://discord.com/channels/%s/%s/%s", e.GuildID, m.ChannelID, m.ID),
-		// todo depends on https://github.com/bwmarrin/discordgo/pull/1042
-		//Footer: &discordgo.MessageEmbedFooter{
-		//	Text: fmt.Sprintf("Pinned by %s", e.Member.User.String()),
-		//},
+		Footer: &discordgo.MessageEmbedFooter{
+			Text: fmt.Sprintf("Pinned by %s", e.Member.User.String()),
+		},
 	})
 	if err != nil {
 		log.WithError(err).Error("Could not send message")
