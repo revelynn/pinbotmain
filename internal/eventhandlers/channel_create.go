@@ -2,22 +2,15 @@ package eventhandlers
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/elliotwms/pinbot/internal/storage"
+	"github.com/elliotwms/pinbot/internal/commandhandlers"
 	"github.com/sirupsen/logrus"
 )
 
-func ChannelCreate(log *logrus.Entry) func(_ *discordgo.Session, e *discordgo.ChannelCreate) {
-	return func(_ *discordgo.Session, e *discordgo.ChannelCreate) {
-		if err := addChannel(e.Channel); err != nil {
-			log.WithError(err).Error("Could not add channel")
-		}
+func ChannelCreate(log *logrus.Entry) func(s *discordgo.Session, e *discordgo.ChannelCreate) {
+	return func(s *discordgo.Session, e *discordgo.ChannelCreate) {
+		commandhandlers.SaveChannelCommandHandler(&commandhandlers.SaveChannelCommand{
+			GuildID: e.GuildID,
+			Channel: e.Channel,
+		}, s, log)
 	}
-}
-
-func addChannel(e *discordgo.Channel) error {
-	gc, _ := storage.Guilds.LoadOrStore(e.GuildID, &storage.GuildChannels{})
-
-	_, err := gc.(*storage.GuildChannels).Add(e)
-
-	return err
 }

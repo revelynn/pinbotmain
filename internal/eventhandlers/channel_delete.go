@@ -2,18 +2,15 @@ package eventhandlers
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/elliotwms/pinbot/internal/storage"
+	"github.com/elliotwms/pinbot/internal/commandhandlers"
 	"github.com/sirupsen/logrus"
 )
 
-func ChannelDelete(log *logrus.Entry) func(_ *discordgo.Session, e *discordgo.ChannelDelete) {
-	return func(_ *discordgo.Session, e *discordgo.ChannelDelete) {
-		gc, _ := storage.Guilds.LoadOrStore(e.GuildID, &storage.GuildChannels{})
-
-		_, err := gc.(*storage.GuildChannels).Delete(e.Channel.ID)
-		if err != nil {
-			log.WithError(err).Error("Could not add channel")
-			return
-		}
+func ChannelDelete(log *logrus.Entry) func(s *discordgo.Session, e *discordgo.ChannelDelete) {
+	return func(s *discordgo.Session, e *discordgo.ChannelDelete) {
+		commandhandlers.DeleteChannelCommandHandler(&commandhandlers.DeleteChannelCommand{
+			GuildID:   e.GuildID,
+			ChannelID: e.Channel.ID,
+		}, s, log)
 	}
 }
