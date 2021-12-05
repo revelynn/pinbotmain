@@ -9,27 +9,36 @@ import (
 var Guilds = sync.Map{}
 
 type GuildChannels struct {
+	mx       sync.Mutex
 	Channels []*discordgo.Channel
 }
 
-func (gc *GuildChannels) Add(c *discordgo.Channel) (bool, error) {
-	if c.Type != discordgo.ChannelTypeGuildText {
-		return false, nil
-	}
+func (gc *GuildChannels) Add(channels ...*discordgo.Channel) (bool, error) {
+	gc.mx.Lock()
+	defer gc.mx.Unlock()
 
-	// skip adding if this channel already exists
-	for _, channel := range gc.Channels {
-		if channel.ID == c.ID {
+	for _, c := range channels {
+		if c.Type != discordgo.ChannelTypeGuildText {
 			return false, nil
 		}
-	}
 
-	gc.Channels = append(gc.Channels, c)
+		// skip adding if this channel already exists
+		for _, channel := range gc.Channels {
+			if channel.ID == c.ID {
+				return false, nil
+			}
+		}
+
+		gc.Channels = append(gc.Channels, c)
+	}
 
 	return true, nil
 }
 
 func (gc *GuildChannels) Delete(id string) (bool, error) {
+	gc.mx.Lock()
+	defer gc.mx.Unlock()
+
 	for i, channel := range gc.Channels {
 		if channel.ID == id {
 			gc.Channels = append(gc.Channels[:i], gc.Channels[i+1:]...)
