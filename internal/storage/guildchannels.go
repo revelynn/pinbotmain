@@ -1,6 +1,12 @@
 package storage
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"sync"
+
+	"github.com/bwmarrin/discordgo"
+)
+
+var Guilds = sync.Map{}
 
 type GuildChannels struct {
 	Channels []*discordgo.Channel
