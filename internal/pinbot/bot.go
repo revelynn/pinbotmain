@@ -8,33 +8,47 @@ import (
 )
 
 type Bot struct {
-	Session     *discordgo.Session
-	Log         *logrus.Logger
-	TestGuildID *string
+	session     *discordgo.Session
+	log         *logrus.Logger
+	testGuildID *string
 }
 
 func New(s *discordgo.Session, l *logrus.Logger) *Bot {
-	bot := &Bot{Session: s, Log: l}
-
-	return bot.configure()
+	return &Bot{session: s, log: l}
 }
 
 func (bot *Bot) WithTestGuildID(id string) *Bot {
-	bot.TestGuildID = &id
+	bot.testGuildID = &id
 
 	return bot
 }
 
+// Run runs the bot without tampering with the session
+// This is useful in scenarios where the session is managed externally
 func (bot *Bot) Run(notify chan os.Signal) error {
-	bot.Log.Info("Starting bot...")
-	if err := bot.Session.Open(); err != nil {
+	cleanup := bot.registerHandlers()
+	defer cleanup()
+	<-notify
+
+	return nil
+}
+
+// StartSession starts the session, calls Run (blocking until notify is received), then ends the session
+func (bot *Bot) StartSession(notify chan os.Signal) error {
+	bot.log.Info("Starting bot...")
+	if err := bot.session.Open(); err != nil {
+		bot.log.WithError(err).Error("Could not open session")
 		return err
 	}
 
-	<-notify
+	if err := bot.Run(notify); err != nil {
+		bot.log.WithError(err).Error("Could not run bot")
+		return err
+	}
 
-	bot.Log.Info("Stopping bot...")
-	if err := bot.Session.Close(); err != nil {
+	bot.log.Info("Stopping bot...")
+	if err := bot.session.Close(); err != nil {
+		bot.log.WithError(err).Error("Could not close session")
 		return err
 	}
 

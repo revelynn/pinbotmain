@@ -29,7 +29,7 @@ func main() {
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
-	if err := bot.Run(sc); err != nil {
-		panic(err)
+	if err := bot.StartSession(sc); err != nil {
+		os.Exit(1)
 	}
 }

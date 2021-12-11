@@ -6,13 +6,20 @@ import (
 
 const logFieldHandler = "handler"
 
-func (bot *Bot) configure() *Bot {
-	bot.Session.AddHandler(eventhandlers.Ready(bot.Log.WithField(logFieldHandler, "Ready")))
-	bot.Session.AddHandler(eventhandlers.MessageReactionAdd(bot.Log.WithField(logFieldHandler, "MessageReactionAdd"), bot.TestGuildID))
-	bot.Session.AddHandler(eventhandlers.GuildCreate(bot.Log.WithField(logFieldHandler, "GuildCreate")))
-	bot.Session.AddHandler(eventhandlers.ChannelCreate(bot.Log.WithField(logFieldHandler, "ChannelCreate")))
-	bot.Session.AddHandler(eventhandlers.ChannelUpdate(bot.Log.WithField(logFieldHandler, "ChannelUpdate")))
-	bot.Session.AddHandler(eventhandlers.ChannelDelete(bot.Log.WithField(logFieldHandler, "ChannelDelete")))
+func (bot *Bot) registerHandlers() func() {
+	closers := []func(){
+		bot.session.AddHandler(eventhandlers.Ready(bot.log.WithField(logFieldHandler, "Ready"))),
+		bot.session.AddHandler(eventhandlers.MessageReactionAdd(bot.log.WithField(logFieldHandler, "MessageReactionAdd"), bot.testGuildID)),
+		bot.session.AddHandler(eventhandlers.GuildCreate(bot.log.WithField(logFieldHandler, "GuildCreate"))),
+		bot.session.AddHandler(eventhandlers.ChannelCreate(bot.log.WithField(logFieldHandler, "ChannelCreate"))),
+		bot.session.AddHandler(eventhandlers.ChannelUpdate(bot.log.WithField(logFieldHandler, "ChannelUpdate"))),
+		bot.session.AddHandler(eventhandlers.ChannelDelete(bot.log.WithField(logFieldHandler, "ChannelDelete"))),
+	}
 
-	return bot
+	return func() {
+		bot.log.Debugf("Deregistering handlers (count: %d)", len(closers))
+		for _, closer := range closers {
+			closer()
+		}
+	}
 }
