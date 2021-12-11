@@ -37,7 +37,7 @@ func TestPinSpecificPinsChannel(t *testing.T) {
 	given.
 		a_channel_named("test").and().
 		a_channel_named("pins").and().
-		a_channel_named("test_pins").and().
+		a_channel_named("test-pins").and().
 		the_message_is_posted()
 
 	when.
