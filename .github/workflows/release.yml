@@ -8,6 +8,7 @@ jobs:
     name: release
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       deployments: write
       packages: write
     steps:
