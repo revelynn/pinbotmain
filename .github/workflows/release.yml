@@ -9,14 +9,13 @@ jobs:
   release:
     name: release
     runs-on: ubuntu-latest
+    needs: test
     outputs:
       tag: ${{ steps.changelog.outputs.tag }}
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Commit Linter
-        uses: wagoid/commitlint-github-action@v2.0.3
       - name: Conventional Changelog Action
         id: changelog
         uses: TriPSs/conventional-changelog-action@v3
