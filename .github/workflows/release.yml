@@ -4,6 +4,8 @@ on:
     branches:
       - master
 jobs:
+  test:
+    uses: elliotwms/pinbot/.github/workflows/test.yml@master
   release:
     name: release
     runs-on: ubuntu-latest
