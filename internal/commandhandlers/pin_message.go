@@ -14,18 +14,32 @@ type PinMessageCommand struct {
 
 func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *logrus.Entry) {
 	e := c.Event
+	l := log.WithFields(map[string]interface{}{
+		"channel_id": e.ChannelID,
+		"message_id": e.MessageID,
+	})
 	m, err := s.ChannelMessage(e.ChannelID, e.MessageID)
 	if err != nil {
 		log.WithError(err).Error("Could not get channel message")
 		return
 	}
 
-	pinChannel, err := getTargetChannel(e.GuildID, e.ChannelID)
+	// acknowledge the message
+	l.Debug("Acknowledging message")
+	err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "👀")
 	if err != nil {
-		log.WithError(err).Error("Could not get target channel")
+		l.WithError(err).Error("Could not acknowledge the message")
 		return
 	}
 
+	// determine the target pin channel for the message
+	pinChannel, err := getTargetChannel(e.GuildID, e.ChannelID)
+	if err != nil {
+		l.WithError(err).Error("Could not get target channel")
+		return
+	}
+
+	// send the pin message
 	_, err = s.ChannelMessageSendEmbed(pinChannel, &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
 		Title:       e.Emoji.Name + " New Pin",
@@ -36,7 +50,16 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 		},
 	})
 	if err != nil {
-		log.WithError(err).Error("Could not send message")
+		l.WithError(err).Error("Could not send message")
+	}
+
+	// mark the message as done
+	l.Debug("Marking message as done")
+	err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "✅")
+	if err != nil {
+		l.WithError(err).Error("Could not mark the message as done")
+
+		return
 	}
 }
 

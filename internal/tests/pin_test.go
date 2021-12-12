@@ -13,7 +13,9 @@ func TestPin(t *testing.T) {
 		the_message_is_reacted_to()
 
 	then.
-		a_pin_message_should_be_posted_in_the_last_channel()
+		a_pin_message_should_be_posted_in_the_last_channel().and().
+		the_bot_should_add_the_emoji("👀").and().
+		the_bot_should_add_the_emoji("✅")
 }
 
 func TestPinGeneralPinsChannel(t *testing.T) {

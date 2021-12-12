@@ -121,6 +121,14 @@ func (s *PinStage) a_pin_message_should_be_posted_in_the_last_channel() *PinStag
 	return s
 }
 
+func (s *PinStage) the_bot_should_add_the_emoji(emoji string) *PinStage {
+	reactions, err := s.session.MessageReactions(s.channel.ID, s.message.ID, emoji, 0, "", "")
+	s.require.NoError(err)
+	s.require.Len(reactions, 1)
+
+	return s
+}
+
 func (s *PinStage) handleMessageFor(channelID string) func(*discordgo.Session, *discordgo.MessageCreate) {
 	return func(_ *discordgo.Session, m *discordgo.MessageCreate) {
 		if m.ChannelID == channelID {
