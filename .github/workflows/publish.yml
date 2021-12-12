@@ -1,8 +1,9 @@
 name: Create and publish a Docker image
 
 on:
-  release:
-    types: [ published ]
+  push:
+    # Publish semver tags as releases.
+    tags: [ 'v*.*.*' ]
 
 env:
   REGISTRY: ghcr.io
