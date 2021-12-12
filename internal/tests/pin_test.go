@@ -48,3 +48,18 @@ func TestPinSpecificPinsChannel(t *testing.T) {
 	then.
 		a_pin_message_should_be_posted_in_the_last_channel()
 }
+
+func TestPinDuplicate(t *testing.T) {
+	given, when, then := NewPinStage(t)
+
+	given.
+		a_channel_named("test").and().
+		the_message_is_posted().and().
+		the_message_is_already_pinned()
+
+	when.
+		the_message_is_reacted_to()
+
+	then.
+		the_bot_should_log_the_message_as_already_pinned()
+}

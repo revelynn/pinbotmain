@@ -1,6 +1,12 @@
 package tests
 
 import (
+	"bytes"
+	"encoding/json"
+	"github.com/sirupsen/logrus/hooks/test"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -18,6 +24,7 @@ type PinStage struct {
 	session *discordgo.Session
 	require *require.Assertions
 	assert  *assert.Assertions
+	logHook *test.Hook
 
 	sendMessage         *discordgo.MessageSend
 	channel             *discordgo.Channel
@@ -27,17 +34,20 @@ type PinStage struct {
 }
 
 func NewPinStage(t *testing.T) (*PinStage, *PinStage, *PinStage) {
+	log := logrus.New()
+
 	s := &PinStage{
 		t:       t,
 		session: session,
 		require: require.New(t),
 		assert:  assert.New(t),
+		logHook: test.NewLocal(log),
 	}
 
 	done := make(chan os.Signal, 1)
 
 	go func() {
-		bot := pinbot.New(session, logrus.New())
+		bot := pinbot.New(session, log)
 		s.require.NoError(bot.Run(done))
 	}()
 
@@ -116,7 +126,7 @@ func (s *PinStage) a_pin_message_should_be_posted_in_the_last_channel() *PinStag
 		}
 
 		return false
-	}, time.Second, 10*time.Millisecond)
+	}, 5*time.Second, 10*time.Millisecond)
 
 	return s
 }
@@ -135,4 +145,44 @@ func (s *PinStage) handleMessageFor(channelID string) func(*discordgo.Session, *
 			s.messages = append(s.messages, m.Message)
 		}
 	}
+}
+
+type MockRoundTripper func(request *http.Request) (*http.Response, error)
+
+func (m MockRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	return m(request)
+}
+
+func (s *PinStage) the_message_is_already_pinned() {
+	s.session.Client.Transport = MockRoundTripper(func(request *http.Request) (*http.Response, error) {
+		expectedPath := discordgo.EndpointMessageReactions(s.message.ChannelID, s.message.ID, url.PathEscape("📌"))
+		if request.Method == http.MethodGet && request.URL.String() == expectedPath {
+			bs, err := json.Marshal([]*discordgo.User{
+				{ID: "foo"},
+				{ID: "bar"},
+			})
+			s.require.NoError(err)
+
+			s.session.Client.Transport = nil
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(bytes.NewReader(bs)),
+			}, nil
+		}
+
+		return http.DefaultTransport.RoundTrip(request)
+	})
+}
+
+func (s *PinStage) the_bot_should_log_the_message_as_already_pinned() {
+	s.require.Eventually(func() bool {
+		for _, e := range s.logHook.AllEntries() {
+			if e.Message == "Message already pinned" {
+				return true
+			}
+		}
+
+		return false
+	}, 1*time.Second, 10*time.Millisecond)
 }

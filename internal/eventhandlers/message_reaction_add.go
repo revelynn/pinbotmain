@@ -19,6 +19,17 @@ func MessageReactionAdd(log *logrus.Entry, testGuildID *string) func(s *discordg
 			return
 		}
 
+		reactions, err := s.MessageReactions(e.ChannelID, e.MessageID, e.Emoji.APIName(), 0, "", "")
+		if err != nil {
+			log.WithError(err).Error("Could not get message reactions")
+			return
+		}
+
+		if len(reactions) > 1 {
+			log.WithField("reactions", len(reactions)).Info("Message already pinned")
+			return
+		}
+
 		log.Info("Pinning message")
 
 		commandhandlers.PinMessageCommandHandler(&commandhandlers.PinMessageCommand{Event: e}, s, log)
