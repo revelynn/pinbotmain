@@ -8,6 +8,7 @@ jobs:
     name: release
     runs-on: ubuntu-latest
     permissions:
+      deployments: write
       packages: write
     steps:
       - uses: actions/checkout@v2
