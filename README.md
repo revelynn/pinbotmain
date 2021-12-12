@@ -15,7 +15,7 @@ You should set up a channel _that is only writeable by the bot_ as the pin chann
 
 ```shell
 export TOKEN {bot_token}
-docker run -e TOKEN ghcr.io/elliotwms/pinbot:v0.3.0
+docker run -e TOKEN ghcr.io/elliotwms/pinbot:{version}
 ```
 
 ## Configuration
