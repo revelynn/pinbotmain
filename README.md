@@ -9,11 +9,27 @@ For a channel with name `#channel` it will look for the following channels:
 
 You should set up a channel _that is only writeable by the bot_ as the pin channel
 
+⚠️ Note that this bot is currently in _alpha_ and is used at your own risk! An official deployment is coming soon™️ ⚠️
+
+## Run
+
+```shell
+export TOKEN {bot_token}
+docker run -e TOKEN ghcr.io/elliotwms/pinbot:v0.3.0
+```
+
+## Configuration
+
+| Variable        | Description                                                            | Required |
+|-----------------|------------------------------------------------------------------------|----------|
+| `TOKEN`         | Bot token ID                                                           | `true`   |
+| `TEST_GUILD_ID` | When specified, the bot should only respond to pins in this test guild | `false`  |
+
 ## Testing
 `/tests` contains a suite of integration tests which run against the real Discord API in a test guild. It will create and destroy a guild for the test run.
 
 In order to run these test yourself you will need to:
-* [Create a new bot](https://discord.com/developers/applications), obtaining the bot Client ID and Token
+* [Create a new bot](https://discord.com/developers/applications), obtaining the bot token
 * Run the tests with the following environment variables:
   * `TOKEN`: the bot token
 
