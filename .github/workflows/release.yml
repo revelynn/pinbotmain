@@ -6,6 +6,8 @@ on:
 jobs:
   test:
     uses: elliotwms/pinbot/.github/workflows/test.yml@master
+    secrets:
+      TOKEN: ${{ secrets.TOKEN }}
   release:
     name: release
     runs-on: ubuntu-latest
