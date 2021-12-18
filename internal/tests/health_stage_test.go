@@ -46,10 +46,6 @@ func NewHealthStage(t *testing.T) (*HealthStage, *HealthStage, *HealthStage) {
 	return s, s, s
 }
 
-func (s *HealthStage) and() *HealthStage {
-	return s
-}
-
 func (s *HealthStage) the_bot_is_running() *HealthStage {
 	return s // no-op
 }
