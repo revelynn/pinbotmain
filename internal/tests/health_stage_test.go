@@ -4,8 +4,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/elliotwms/pinbot/internal/pinbot"
 	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"os"
@@ -16,8 +14,6 @@ type HealthStage struct {
 	t       *testing.T
 	session *discordgo.Session
 	require *require.Assertions
-	assert  *assert.Assertions
-	logHook *test.Hook
 	res     *http.Response
 }
 
@@ -28,8 +24,6 @@ func NewHealthStage(t *testing.T) (*HealthStage, *HealthStage, *HealthStage) {
 		t:       t,
 		session: session,
 		require: require.New(t),
-		assert:  assert.New(t),
-		logHook: test.NewLocal(log),
 	}
 
 	done := make(chan os.Signal, 1)
