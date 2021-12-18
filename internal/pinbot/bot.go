@@ -1,16 +1,19 @@
 package pinbot
 
 import (
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 )
 
 type Bot struct {
-	session     *discordgo.Session
-	log         *logrus.Logger
-	testGuildID *string
+	session         *discordgo.Session
+	log             *logrus.Logger
+	testGuildID     *string
+	healthCheckAddr *string
 }
 
 func New(s *discordgo.Session, l *logrus.Logger) *Bot {
@@ -23,11 +26,22 @@ func (bot *Bot) WithTestGuildID(id string) *Bot {
 	return bot
 }
 
+func (bot *Bot) WithHealthCheck(addr string) *Bot {
+	bot.healthCheckAddr = &addr
+
+	return bot
+}
+
 // Run runs the bot without tampering with the session
 // This is useful in scenarios where the session is managed externally
 func (bot *Bot) Run(notify chan os.Signal) error {
 	cleanup := bot.registerHandlers()
 	defer cleanup()
+
+	if bot.healthCheckAddr != nil {
+		go bot.httpListen()
+	}
+
 	<-notify
 
 	return nil
@@ -53,4 +67,24 @@ func (bot *Bot) StartSession(notify chan os.Signal) error {
 	}
 
 	return nil
+}
+
+func (bot *Bot) httpListen() {
+	http.HandleFunc("/v1/health", func(w http.ResponseWriter, req *http.Request) {
+		latency := bot.session.HeartbeatLatency()
+		// fail if we have not received a heartbeat response in more than 5 minutes
+		if latency > 5*time.Minute {
+			w.WriteHeader(500)
+		}
+
+		if _, err := w.Write([]byte(latency.String())); err != nil {
+			bot.log.WithError(err).Error("Could not write health check response")
+		}
+	})
+
+	err := http.ListenAndServe(*bot.healthCheckAddr, nil)
+	if err != nil {
+		bot.log.WithError(err).Error("Could not serve health check endpoint")
+		return
+	}
 }
