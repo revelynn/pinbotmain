@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -23,7 +24,9 @@ func main() {
 		panic(err)
 	}
 
-	s.LogLevel = discordgo.LogDebug
+	if strings.ToLower(os.Getenv("DEBUG")) == "true" {
+		s.LogLevel = discordgo.LogDebug
+	}
 
 	bot := pinbot.New(s, log)
 

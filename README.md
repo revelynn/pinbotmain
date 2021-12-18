@@ -1,5 +1,7 @@
 # Pinbot
 
+[Install 📌](https://discord.com/oauth2/authorize?client_id={bot_client_id}&permissions=3136&redirect_uri=http%3A%2F%2Flocalhost&scope=bot)
+
 Whenever you react to a message with a pushpin 📌 emoji, Pinbot posts the message to a channel.
 
 For a channel with name `#channel` it will look for the following channels:
