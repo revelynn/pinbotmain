@@ -20,10 +20,11 @@ docker run -e TOKEN ghcr.io/elliotwms/pinbot:{version}
 
 ## Configuration
 
-| Variable        | Description                                                            | Required |
-|-----------------|------------------------------------------------------------------------|----------|
-| `TOKEN`         | Bot token ID                                                           | `true`   |
-| `TEST_GUILD_ID` | When specified, the bot should only respond to pins in this test guild | `false`  |
+| Variable            | Description                                                            | Required |
+|---------------------|------------------------------------------------------------------------|----------|
+| `TOKEN`             | Bot token ID                                                           | `true`   |
+| `TEST_GUILD_ID`     | When specified, the bot should only respond to pins in this test guild | `false`  |
+| `HEALTH_CHECK_ADDR` | Address to serve the `/v1/health/` endpoint on (e.g. `:8080`)          | `false`  |
 
 ## Testing
 `/tests` contains a suite of integration tests which run against the real Discord API in a test guild. It will create and destroy a guild for the test run.
