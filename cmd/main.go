@@ -31,6 +31,10 @@ func main() {
 		bot.WithTestGuildID(id)
 	}
 
+	if addr := os.Getenv("HEALTH_CHECK_ADDR"); addr != "" {
+		bot.WithHealthCheck(addr)
+	}
+
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
