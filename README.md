@@ -1,6 +1,6 @@
 # Pinbot
 
-[Install 📌](https://discord.com/oauth2/authorize?client_id=921554139740254209&permissions=3136&redirect_uri=http%3A%2F%2Flocalhost&scope=bot)
+[Install 📌](https://discord.com/oauth2/authorize?client_id=921554139740254209&permissions=3136&redirect_uri=https%3A%2F%2Fgithub.com%2Felliotwms%2Fpinbot&scope=bot)
 
 Whenever you react to a message with a pushpin 📌 emoji, Pinbot posts the message to a channel.
 
@@ -13,6 +13,11 @@ For a channel with name `#channel` it will look for the following channels:
 You should set up a channel _that is only writeable by the bot_ as the pin channel
 
 ⚠️ Note that this bot is currently in _alpha_ and is used at your own risk! ⚠️
+
+### Permissions
+
+Pinbot is designed to be run with as few permissions as possible. In order for it to work, it needs to be able to see
+channels and messages, and write messages to whichever channel you have set up as its pin output channel.
 
 ## Run
 
