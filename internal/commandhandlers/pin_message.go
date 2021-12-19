@@ -36,8 +36,14 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 	pinChannel, err := getTargetChannel(e.GuildID, e.ChannelID)
 	if err != nil {
 		l.WithError(err).Error("Could not get target channel")
+		err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "🤔")
+		if err != nil {
+			l.WithError(err).Error("Could not mark the message as failed")
+		}
 		return
 	}
+
+	l = l.WithField("target_channel_id", pinChannel)
 
 	// send the pin message
 	_, err = s.ChannelMessageSendEmbed(pinChannel, &discordgo.MessageEmbed{
@@ -51,6 +57,11 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 	})
 	if err != nil {
 		l.WithError(err).Error("Could not send message")
+		err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "💩")
+		if err != nil {
+			l.WithError(err).Error("Could not mark the message as failed")
+		}
+		return
 	}
 
 	// mark the message as done
