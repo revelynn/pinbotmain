@@ -8,6 +8,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	emojiSeen = "👀"
+	emojiErr  = "💩"
+	emojiDone = "✅"
+)
+
 type PinMessageCommand struct {
 	GuildID  string
 	Message  *discordgo.Message
@@ -22,10 +28,24 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 		"message_id": m.ID,
 	})
 
+	l.Info("Pinning message")
+
+	if m.Author.ID == s.State.User.ID {
+		l.Info("Ignoring self pin")
+	}
+
+	pinned, err := isAlreadyPinned(s, m)
+	if err != nil {
+		l.WithError(err).Error("Could not determine if message already pinned")
+	}
+	if pinned {
+		l.Info("Message already pinned")
+		return
+	}
+
 	// acknowledge the message
 	l.Debug("Acknowledging message")
-	err := s.MessageReactionAdd(m.ChannelID, m.ID, "👀")
-	if err != nil {
+	if err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiSeen); err != nil {
 		l.WithError(err).Error("Could not acknowledge the message")
 		return
 	}
@@ -34,7 +54,7 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 	pinChannel, err := getTargetChannel(c.GuildID, m.ChannelID)
 	if err != nil {
 		l.WithError(err).Error("Could not get target channel")
-		err = s.MessageReactionAdd(m.ChannelID, m.ID, "🤔")
+		err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiErr)
 		if err != nil {
 			l.WithError(err).Error("Could not mark the message as failed")
 		}
@@ -60,7 +80,7 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 	_, err = s.ChannelMessageSendEmbed(pinChannel, pinMessage)
 	if err != nil {
 		l.WithError(err).Error("Could not send message")
-		err = s.MessageReactionAdd(m.ChannelID, m.ID, "💩")
+		err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiErr)
 		if err != nil {
 			l.WithError(err).Error("Could not mark the message as failed")
 		}
@@ -69,12 +89,27 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 
 	// mark the message as done
 	l.Debug("Marking message as done")
-	err = s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
+	err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiDone)
 	if err != nil {
 		l.WithError(err).Error("Could not mark the message as done")
 
 		return
 	}
+}
+
+func isAlreadyPinned(s *discordgo.Session, m *discordgo.Message) (bool, error) {
+	acks, err := s.MessageReactions(m.ChannelID, m.ID, emojiDone, 0, "", "")
+	if err != nil {
+		return false, err
+	}
+
+	for _, ack := range acks {
+		if ack.ID == s.State.User.ID {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // getTargetChannel returns the target pin channel for a given channel #channel in the following order:

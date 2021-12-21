@@ -11,6 +11,7 @@ func MessageReactionAdd(log *logrus.Entry, testGuildID string) func(s *discordgo
 		log.WithField("emoji", e.Emoji.Name).Info("Received reaction")
 
 		if e.Emoji.Name != "📌" {
+			// only react to pin emojis
 			return
 		}
 
@@ -18,19 +19,6 @@ func MessageReactionAdd(log *logrus.Entry, testGuildID string) func(s *discordgo
 			log.Info("Skipping non-test guild")
 			return
 		}
-
-		reactions, err := s.MessageReactions(e.ChannelID, e.MessageID, e.Emoji.APIName(), 0, "", "")
-		if err != nil {
-			log.WithError(err).Error("Could not get message reactions")
-			return
-		}
-
-		if len(reactions) > 1 {
-			log.WithField("reactions", len(reactions)).Info("Message already pinned")
-			return
-		}
-
-		log.Info("Pinning message")
 
 		m, err := s.ChannelMessage(e.ChannelID, e.MessageID)
 		if err != nil {
