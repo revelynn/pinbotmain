@@ -3,7 +3,9 @@ package commandhandlers
 import (
 	"errors"
 	"fmt"
+
 	"github.com/bwmarrin/discordgo"
+	"github.com/elliotwms/pinbot/internal/config"
 	"github.com/elliotwms/pinbot/internal/storage"
 	"github.com/sirupsen/logrus"
 )
@@ -30,7 +32,7 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 
 	l.Info("Pinning message")
 
-	if m.Author.ID == s.State.User.ID {
+	if !config.SelfPinEnabled && m.Author.ID == s.State.User.ID {
 		l.Info("Ignoring self pin")
 	}
 

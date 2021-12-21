@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/elliotwms/pinbot/internal/config"
 	"github.com/elliotwms/pinbot/internal/pinbot"
 	"os"
 	"os/signal"
@@ -14,10 +15,9 @@ import (
 var log = logrus.New()
 
 func main() {
-	token := mustGetEnv("TOKEN")
-	appID := mustGetEnv("APPLICATION_ID")
+	config.Configure()
 
-	s, err := discordgo.New("Bot " + token)
+	s, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
 		panic(err)
 	}
@@ -26,7 +26,7 @@ func main() {
 		s.LogLevel = discordgo.LogDebug
 	}
 
-	bot := pinbot.New(appID, s, log)
+	bot := pinbot.New(config.ApplicationID, s, log)
 
 	if id := os.Getenv("TEST_GUILD_ID"); id != "" {
 		bot.WithTestGuildID(id)
@@ -42,12 +42,4 @@ func main() {
 	if err := bot.StartSession(sc); err != nil {
 		os.Exit(1)
 	}
-}
-
-func mustGetEnv(s string) string {
-	token := os.Getenv(s)
-	if token == "" {
-		log.Fatalf("Missing '%s'", s)
-	}
-	return token
 }

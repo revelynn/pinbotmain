@@ -8,20 +8,21 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/elliotwms/pinbot/internal/config"
 )
 
 const testGuildName = "Pinbot Integration Testing"
 
 var (
-	applicationID      string
-	botToken           string
-	testGuild          string
 	session            *discordgo.Session
 	shouldCleanupGuild bool
 )
 
 func TestMain(m *testing.M) {
-	configure()
+	config.Configure()
+	// enable testing with a single bot by allowing self-pins
+	config.SelfPinEnabled = true
+
 	openSession()
 	defer closeSession()
 
@@ -29,23 +30,9 @@ func TestMain(m *testing.M) {
 	os.Exit(0)
 }
 
-func configure() {
-	applicationID = mustGetEnv("APPLICATION_ID")
-	botToken = mustGetEnv("TOKEN")
-}
-
-func mustGetEnv(e string) string {
-	s := os.Getenv(e)
-	if s == "" {
-		panic(fmt.Errorf("missing env '%s'", e))
-	}
-
-	return s
-}
-
 func openSession() {
 	var err error
-	session, err = discordgo.New(fmt.Sprintf("Bot %s", botToken))
+	session, err = discordgo.New(fmt.Sprintf("Bot %s", config.Token))
 	if err != nil {
 		panic(err)
 	}
@@ -54,13 +41,12 @@ func openSession() {
 		panic(err)
 	}
 
-	testGuild = os.Getenv("TEST_GUILD_ID")
-	if testGuild == "" {
+	if config.TestGuildID == "" {
 		log.Println("'TEST_GUILD_ID' not provided. Deleting stale guilds and creating new guild")
 		deleteStaleGuilds()
 		createGuild()
 	} else {
-		log.Printf("Using test guild ID '%s'", testGuild)
+		log.Printf("Using test guild ID '%s'", config.TestGuildID)
 	}
 }
 
@@ -95,13 +81,13 @@ func createGuild() {
 		panic(err)
 	}
 
-	testGuild = guild.ID
+	config.TestGuildID = guild.ID
 	shouldCleanupGuild = true
 }
 
 func closeSession() {
 	if shouldCleanupGuild {
-		_, err := session.GuildDelete(testGuild)
+		_, err := session.GuildDelete(config.TestGuildID)
 		if err != nil {
 			panic(err)
 		}

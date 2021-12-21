@@ -10,7 +10,7 @@ func TestPin(t *testing.T) {
 		the_message_is_posted()
 
 	when.
-		the_message_is_reacted_to()
+		the_message_is_reacted_to_with("📌")
 
 	then.
 		a_pin_message_should_be_posted_in_the_last_channel().and().
@@ -27,7 +27,7 @@ func TestPinGeneralPinsChannel(t *testing.T) {
 		the_message_is_posted()
 
 	when.
-		the_message_is_reacted_to()
+		the_message_is_reacted_to_with("📌")
 
 	then.
 		a_pin_message_should_be_posted_in_the_last_channel()
@@ -43,7 +43,7 @@ func TestPinSpecificPinsChannel(t *testing.T) {
 		the_message_is_posted()
 
 	when.
-		the_message_is_reacted_to()
+		the_message_is_reacted_to_with("📌")
 
 	then.
 		a_pin_message_should_be_posted_in_the_last_channel()
@@ -58,8 +58,58 @@ func TestPinDuplicate(t *testing.T) {
 		the_message_is_already_pinned()
 
 	when.
-		the_message_is_reacted_to()
+		the_message_is_reacted_to_with("📌")
 
 	then.
 		the_bot_should_log_the_message_as_already_pinned()
+}
+
+func TestPinSelfPinDisabled(t *testing.T) {
+	given, when, then := NewPinStage(t)
+
+	given.
+		a_channel_named("test").and().
+		self_pin_is_disabled().and().
+		the_message_is_posted().and().
+		the_message_is_already_pinned()
+
+	when.
+		the_message_is_reacted_to_with("📌")
+
+	then.
+		the_bot_should_log_the_message_as_an_avoided_self_pin()
+}
+
+func TestPinImportCommand(t *testing.T) {
+	given, when, then := NewPinStage(t)
+
+	given.
+		a_channel_named("test").and().
+		the_message_is_posted().and().
+		the_message_is_pinned()
+
+	when.
+		an_import_is_triggered()
+
+	then.
+		a_pin_message_should_be_posted_in_the_last_channel().and().
+		the_bot_should_add_the_emoji("👀").and().
+		the_bot_should_add_the_emoji("✅")
+}
+
+func TestPinImportCommandIgnoreAlreadyPinned(t *testing.T) {
+	given, when, then := NewPinStage(t)
+
+	given.
+		a_channel_named("test").and().
+		the_message_is_posted().and().
+		the_message_is_pinned()
+
+	when.
+		an_import_is_triggered()
+
+	then.
+		a_pin_message_should_be_posted_in_the_last_channel().and().
+		the_bot_should_add_the_emoji("👀").and().
+		the_bot_should_add_the_emoji("✅")
 }

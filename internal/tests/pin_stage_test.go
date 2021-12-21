@@ -3,7 +3,6 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/sirupsen/logrus/hooks/test"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,8 +12,11 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/elliotwms/pinbot/internal/commandhandlers"
+	"github.com/elliotwms/pinbot/internal/config"
 	"github.com/elliotwms/pinbot/internal/pinbot"
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,6 +26,8 @@ type PinStage struct {
 	session *discordgo.Session
 	require *require.Assertions
 	assert  *assert.Assertions
+
+	log     *logrus.Logger
 	logHook *test.Hook
 
 	sendMessage         *discordgo.MessageSend
@@ -38,6 +42,7 @@ func NewPinStage(t *testing.T) (*PinStage, *PinStage, *PinStage) {
 
 	s := &PinStage{
 		t:       t,
+		log:     log,
 		session: session,
 		require: require.New(t),
 		assert:  assert.New(t),
@@ -47,7 +52,7 @@ func NewPinStage(t *testing.T) (*PinStage, *PinStage, *PinStage) {
 	done := make(chan os.Signal, 1)
 
 	go func() {
-		bot := pinbot.New(applicationID, session, log)
+		bot := pinbot.New(config.ApplicationID, session, log)
 		s.require.NoError(bot.Run(done))
 	}()
 
@@ -63,7 +68,7 @@ func (s *PinStage) and() *PinStage {
 }
 
 func (s *PinStage) a_channel_named(name string) *PinStage {
-	c, err := s.session.GuildChannelCreate(testGuild, name, discordgo.ChannelTypeGuildText)
+	c, err := s.session.GuildChannelCreate(config.TestGuildID, name, discordgo.ChannelTypeGuildText)
 	s.require.NoError(err)
 
 	s.t.Cleanup(func() {
@@ -103,8 +108,8 @@ func (s *PinStage) the_message_is_posted() *PinStage {
 	return s
 }
 
-func (s *PinStage) the_message_is_reacted_to() *PinStage {
-	err := s.session.MessageReactionAdd(s.message.ChannelID, s.message.ID, "📌")
+func (s *PinStage) the_message_is_reacted_to_with(emoji string) *PinStage {
+	err := s.session.MessageReactionAdd(s.message.ChannelID, s.message.ID, emoji)
 	s.require.NoError(err)
 
 	return s
@@ -132,9 +137,20 @@ func (s *PinStage) a_pin_message_should_be_posted_in_the_last_channel() *PinStag
 }
 
 func (s *PinStage) the_bot_should_add_the_emoji(emoji string) *PinStage {
-	reactions, err := s.session.MessageReactions(s.channel.ID, s.message.ID, emoji, 0, "", "")
-	s.require.NoError(err)
-	s.require.Len(reactions, 1)
+	s.require.Eventually(func() bool {
+		reactions, err := s.session.MessageReactions(s.channel.ID, s.message.ID, emoji, 0, "", "")
+		if err != nil {
+			return false
+		}
+
+		for _, r := range reactions {
+			if r.ID == s.session.State.User.ID {
+				return true
+			}
+		}
+
+		return false
+	}, 5*time.Second, 100*time.Millisecond)
 
 	return s
 }
@@ -155,11 +171,10 @@ func (m MockRoundTripper) RoundTrip(request *http.Request) (*http.Response, erro
 
 func (s *PinStage) the_message_is_already_pinned() {
 	s.session.Client.Transport = MockRoundTripper(func(request *http.Request) (*http.Response, error) {
-		expectedPath := discordgo.EndpointMessageReactions(s.message.ChannelID, s.message.ID, url.PathEscape("📌"))
+		expectedPath := discordgo.EndpointMessageReactions(s.message.ChannelID, s.message.ID, url.PathEscape("✅"))
 		if request.Method == http.MethodGet && request.URL.String() == expectedPath {
 			bs, err := json.Marshal([]*discordgo.User{
-				{ID: "foo"},
-				{ID: "bar"},
+				{ID: s.session.State.User.ID},
 			})
 			s.require.NoError(err)
 
@@ -185,4 +200,38 @@ func (s *PinStage) the_bot_should_log_the_message_as_already_pinned() {
 
 		return false
 	}, 1*time.Second, 10*time.Millisecond)
+}
+
+func (s *PinStage) self_pin_is_disabled() *PinStage {
+	c := config.SelfPinEnabled
+	config.SelfPinEnabled = false
+
+	s.t.Cleanup(func() {
+		config.SelfPinEnabled = c
+	})
+
+	return s
+}
+
+func (s *PinStage) the_bot_should_log_the_message_as_an_avoided_self_pin() {
+	s.require.Eventually(func() bool {
+		for _, e := range s.logHook.AllEntries() {
+			if e.Message == "Ignoring self pin" {
+				return true
+			}
+		}
+
+		return false
+	}, 1*time.Second, 10*time.Millisecond)
+}
+
+func (s *PinStage) the_message_is_pinned() {
+	s.require.NoError(s.session.ChannelMessagePin(s.channel.ID, s.message.ID))
+}
+
+func (s *PinStage) an_import_is_triggered() {
+	commandhandlers.ImportChannelCommandHandler(&commandhandlers.ImportChannelCommand{
+		GuildID:   config.TestGuildID,
+		ChannelID: s.channel.ID,
+	}, s.session, s.log.WithField("test", true))
 }
