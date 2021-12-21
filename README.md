@@ -54,5 +54,6 @@ destroying one for each test run.
 * Invite your bot to your guild, giving it the usual bot permissions as well as:
     * Manage Channels (to create channels during tests)
     * Read Messages (to assert on message creation)
-    * `https://discord.com/oauth2/authorize?client_id={bot_client_id}&permissions=68688&redirect_uri=http%3A%2F%2Flocalhost&scope=applications.commands%20bot`
+    * Manage messages (to pin messages)
+    * `https://discord.com/oauth2/authorize?client_id={bot_client_id}&permissions=76880&redirect_uri=http%3A%2F%2Flocalhost&scope=applications.commands%20bot`
 * Set the `TEST_GUILD_ID` environment variable to the test guild's ID
