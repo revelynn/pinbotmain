@@ -2,6 +2,7 @@ package tests
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/elliotwms/pinbot/internal/config"
 	"github.com/elliotwms/pinbot/internal/pinbot"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,7 @@ func NewHealthStage(t *testing.T) (*HealthStage, *HealthStage, *HealthStage) {
 	done := make(chan os.Signal, 1)
 
 	go func() {
-		bot := pinbot.New(session, log)
+		bot := pinbot.New(config.ApplicationID, session, log)
 		s.require.NoError(bot.WithHealthCheck(":8080").Run(done))
 	}()
 

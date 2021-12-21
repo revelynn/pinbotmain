@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/elliotwms/pinbot/internal/config"
 	"github.com/elliotwms/pinbot/internal/pinbot"
 	"github.com/sirupsen/logrus"
 )
@@ -14,12 +15,9 @@ import (
 var log = logrus.New()
 
 func main() {
-	token := os.Getenv("TOKEN")
-	if token == "" {
-		log.Fatal("Missing TOKEN")
-	}
+	config.Configure()
 
-	s, err := discordgo.New("Bot " + token)
+	s, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
 		panic(err)
 	}
@@ -28,7 +26,7 @@ func main() {
 		s.LogLevel = discordgo.LogDebug
 	}
 
-	bot := pinbot.New(s, log)
+	bot := pinbot.New(config.ApplicationID, s, log)
 
 	if id := os.Getenv("TEST_GUILD_ID"); id != "" {
 		bot.WithTestGuildID(id)

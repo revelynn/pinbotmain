@@ -3,40 +3,60 @@ package commandhandlers
 import (
 	"errors"
 	"fmt"
+
 	"github.com/bwmarrin/discordgo"
+	"github.com/elliotwms/pinbot/internal/config"
 	"github.com/elliotwms/pinbot/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	emojiSeen = "👀"
+	emojiErr  = "💩"
+	emojiDone = "✅"
+)
+
 type PinMessageCommand struct {
-	Event *discordgo.MessageReactionAdd
+	GuildID  string
+	Message  *discordgo.Message
+	PinnedBy *discordgo.User
 }
 
 func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *logrus.Entry) {
-	e := c.Event
+	m := c.Message
 	l := log.WithFields(map[string]interface{}{
-		"channel_id": e.ChannelID,
-		"message_id": e.MessageID,
+		"guild_id":   c.GuildID,
+		"channel_id": m.ChannelID,
+		"message_id": m.ID,
 	})
-	m, err := s.ChannelMessage(e.ChannelID, e.MessageID)
+
+	l.Info("Pinning message")
+
+	if !config.SelfPinEnabled && m.Author.ID == s.State.User.ID {
+		l.Info("Ignoring self pin")
+	}
+
+	pinned, err := isAlreadyPinned(s, m)
 	if err != nil {
-		log.WithError(err).Error("Could not get channel message")
+		l.WithError(err).Error("Could not determine if message already pinned")
+	}
+	if pinned {
+		l.Info("Message already pinned")
 		return
 	}
 
 	// acknowledge the message
 	l.Debug("Acknowledging message")
-	err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "👀")
-	if err != nil {
+	if err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiSeen); err != nil {
 		l.WithError(err).Error("Could not acknowledge the message")
 		return
 	}
 
 	// determine the target pin channel for the message
-	pinChannel, err := getTargetChannel(e.GuildID, e.ChannelID)
+	pinChannel, err := getTargetChannel(c.GuildID, m.ChannelID)
 	if err != nil {
 		l.WithError(err).Error("Could not get target channel")
-		err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "🤔")
+		err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiErr)
 		if err != nil {
 			l.WithError(err).Error("Could not mark the message as failed")
 		}
@@ -46,18 +66,23 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 	l = l.WithField("target_channel_id", pinChannel)
 
 	// send the pin message
-	_, err = s.ChannelMessageSendEmbed(pinChannel, &discordgo.MessageEmbed{
+	pinMessage := &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
-		Title:       e.Emoji.Name + " New Pin",
+		Title:       "📌 New Pin",
 		Description: fmt.Sprintf("%s said: %s", m.Author.Mention(), m.Content),
-		URL:         fmt.Sprintf("https://discord.com/channels/%s/%s/%s", e.GuildID, m.ChannelID, m.ID),
-		Footer: &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("Pinned by %s", e.Member.User.String()),
-		},
-	})
+		URL:         fmt.Sprintf("https://discord.com/channels/%s/%s/%s", c.GuildID, m.ChannelID, m.ID),
+	}
+
+	if c.PinnedBy != nil {
+		pinMessage.Footer = &discordgo.MessageEmbedFooter{
+			Text: fmt.Sprintf("Pinned by %s", c.PinnedBy.String()),
+		}
+	}
+
+	_, err = s.ChannelMessageSendEmbed(pinChannel, pinMessage)
 	if err != nil {
 		l.WithError(err).Error("Could not send message")
-		err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "💩")
+		err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiErr)
 		if err != nil {
 			l.WithError(err).Error("Could not mark the message as failed")
 		}
@@ -66,12 +91,27 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 
 	// mark the message as done
 	l.Debug("Marking message as done")
-	err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "✅")
+	err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiDone)
 	if err != nil {
 		l.WithError(err).Error("Could not mark the message as done")
 
 		return
 	}
+}
+
+func isAlreadyPinned(s *discordgo.Session, m *discordgo.Message) (bool, error) {
+	acks, err := s.MessageReactions(m.ChannelID, m.ID, emojiDone, 0, "", "")
+	if err != nil {
+		return false, err
+	}
+
+	for _, ack := range acks {
+		if ack.ID == s.State.User.ID {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // getTargetChannel returns the target pin channel for a given channel #channel in the following order:

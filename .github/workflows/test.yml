@@ -7,6 +7,8 @@ on:
     secrets:
       TOKEN:
         required: true
+      APPLICATION_ID:
+        required: true
 
 jobs:
   test:
@@ -25,6 +27,7 @@ jobs:
       - name: Test
         env:
           TOKEN: ${{ secrets.TOKEN }}
+          APPLICATION_ID: ${{ secrets.APPLICATION_ID }}
         run: go test -v ./...
   lint:
     name: lint

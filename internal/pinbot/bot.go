@@ -12,16 +12,17 @@ import (
 type Bot struct {
 	session         *discordgo.Session
 	log             *logrus.Logger
-	testGuildID     *string
+	applicationID   string
+	testGuildID     string
 	healthCheckAddr *string
 }
 
-func New(s *discordgo.Session, l *logrus.Logger) *Bot {
-	return &Bot{session: s, log: l}
+func New(id string, s *discordgo.Session, l *logrus.Logger) *Bot {
+	return &Bot{session: s, log: l, applicationID: id}
 }
 
 func (bot *Bot) WithTestGuildID(id string) *Bot {
-	bot.testGuildID = &id
+	bot.testGuildID = id
 
 	return bot
 }
