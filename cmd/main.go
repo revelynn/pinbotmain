@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/elliotwms/pinbot/internal/config"
-	"github.com/elliotwms/pinbot/internal/pinbot"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/elliotwms/pinbot/internal/config"
+	"github.com/elliotwms/pinbot/internal/pinbot"
 	"github.com/sirupsen/logrus"
 )
 
