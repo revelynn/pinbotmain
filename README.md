@@ -1,6 +1,6 @@
 # Pinbot
 
-[Install 📌](https://discord.com/oauth2/authorize?client_id=921554139740254209&permissions=3136&redirect_uri=https%3A%2F%2Fgithub.com%2Felliotwms%2Fpinbot&scope=bot)
+[Install 📌](https://discord.com/oauth2/authorize?client_id=921554139740254209&permissions=3136&redirect_uri=https%3A%2F%2Fgithub.com%2Felliotwms%2Fpinbot&scope=scope=applications.commands%20bot)
 
 Whenever you react to a message with a pushpin 📌 emoji, Pinbot posts the message to a channel.
 
@@ -54,5 +54,5 @@ destroying one for each test run.
 * Invite your bot to your guild, giving it the usual bot permissions as well as:
     * Manage Channels (to create channels during tests)
     * Read Messages (to assert on message creation)
-    * `https://discord.com/oauth2/authorize?client_id={bot_client_id}&permissions=68688&redirect_uri=http%3A%2F%2Flocalhost&scope=bot`
+    * `https://discord.com/oauth2/authorize?client_id={bot_client_id}&permissions=68688&redirect_uri=http%3A%2F%2Flocalhost&scope=applications.commands%20bot`
 * Set the `TEST_GUILD_ID` environment variable to the test guild's ID

@@ -29,7 +29,7 @@ func NewHealthStage(t *testing.T) (*HealthStage, *HealthStage, *HealthStage) {
 	done := make(chan os.Signal, 1)
 
 	go func() {
-		bot := pinbot.New(session, log)
+		bot := pinbot.New(applicationID, session, log)
 		s.require.NoError(bot.WithHealthCheck(":8080").Run(done))
 	}()
 

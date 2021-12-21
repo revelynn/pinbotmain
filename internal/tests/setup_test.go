@@ -13,6 +13,7 @@ import (
 const testGuildName = "Pinbot Integration Testing"
 
 var (
+	applicationID      string
 	botToken           string
 	testGuild          string
 	session            *discordgo.Session
@@ -29,6 +30,7 @@ func TestMain(m *testing.M) {
 }
 
 func configure() {
+	applicationID = mustGetEnv("APPLICATION_ID")
 	botToken = mustGetEnv("TOKEN")
 }
 

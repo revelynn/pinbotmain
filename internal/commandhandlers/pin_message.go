@@ -9,34 +9,32 @@ import (
 )
 
 type PinMessageCommand struct {
-	Event *discordgo.MessageReactionAdd
+	GuildID  string
+	Message  *discordgo.Message
+	PinnedBy *discordgo.User
 }
 
 func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *logrus.Entry) {
-	e := c.Event
+	m := c.Message
 	l := log.WithFields(map[string]interface{}{
-		"channel_id": e.ChannelID,
-		"message_id": e.MessageID,
+		"guild_id":   c.GuildID,
+		"channel_id": m.ChannelID,
+		"message_id": m.ID,
 	})
-	m, err := s.ChannelMessage(e.ChannelID, e.MessageID)
-	if err != nil {
-		log.WithError(err).Error("Could not get channel message")
-		return
-	}
 
 	// acknowledge the message
 	l.Debug("Acknowledging message")
-	err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "👀")
+	err := s.MessageReactionAdd(m.ChannelID, m.ID, "👀")
 	if err != nil {
 		l.WithError(err).Error("Could not acknowledge the message")
 		return
 	}
 
 	// determine the target pin channel for the message
-	pinChannel, err := getTargetChannel(e.GuildID, e.ChannelID)
+	pinChannel, err := getTargetChannel(c.GuildID, m.ChannelID)
 	if err != nil {
 		l.WithError(err).Error("Could not get target channel")
-		err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "🤔")
+		err = s.MessageReactionAdd(m.ChannelID, m.ID, "🤔")
 		if err != nil {
 			l.WithError(err).Error("Could not mark the message as failed")
 		}
@@ -46,18 +44,23 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 	l = l.WithField("target_channel_id", pinChannel)
 
 	// send the pin message
-	_, err = s.ChannelMessageSendEmbed(pinChannel, &discordgo.MessageEmbed{
+	pinMessage := &discordgo.MessageEmbed{
 		Type:        discordgo.EmbedTypeRich,
-		Title:       e.Emoji.Name + " New Pin",
+		Title:       "📌 New Pin",
 		Description: fmt.Sprintf("%s said: %s", m.Author.Mention(), m.Content),
-		URL:         fmt.Sprintf("https://discord.com/channels/%s/%s/%s", e.GuildID, m.ChannelID, m.ID),
-		Footer: &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("Pinned by %s", e.Member.User.String()),
-		},
-	})
+		URL:         fmt.Sprintf("https://discord.com/channels/%s/%s/%s", c.GuildID, m.ChannelID, m.ID),
+	}
+
+	if c.PinnedBy != nil {
+		pinMessage.Footer = &discordgo.MessageEmbedFooter{
+			Text: fmt.Sprintf("Pinned by %s", c.PinnedBy.String()),
+		}
+	}
+
+	_, err = s.ChannelMessageSendEmbed(pinChannel, pinMessage)
 	if err != nil {
 		l.WithError(err).Error("Could not send message")
-		err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "💩")
+		err = s.MessageReactionAdd(m.ChannelID, m.ID, "💩")
 		if err != nil {
 			l.WithError(err).Error("Could not mark the message as failed")
 		}
@@ -66,7 +69,7 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 
 	// mark the message as done
 	l.Debug("Marking message as done")
-	err = s.MessageReactionAdd(e.ChannelID, e.MessageID, "✅")
+	err = s.MessageReactionAdd(m.ChannelID, m.ID, "✅")
 	if err != nil {
 		l.WithError(err).Error("Could not mark the message as done")
 

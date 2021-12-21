@@ -47,7 +47,7 @@ func NewPinStage(t *testing.T) (*PinStage, *PinStage, *PinStage) {
 	done := make(chan os.Signal, 1)
 
 	go func() {
-		bot := pinbot.New(session, log)
+		bot := pinbot.New(applicationID, session, log)
 		s.require.NoError(bot.Run(done))
 	}()
 

@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func MessageReactionAdd(log *logrus.Entry, testGuildID *string) func(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
+func MessageReactionAdd(log *logrus.Entry, testGuildID string) func(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
 	return func(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
 		log.WithField("emoji", e.Emoji.Name).Info("Received reaction")
 
@@ -14,7 +14,7 @@ func MessageReactionAdd(log *logrus.Entry, testGuildID *string) func(s *discordg
 			return
 		}
 
-		if testGuildID != nil && *testGuildID != e.GuildID {
+		if testGuildID != "" && testGuildID != e.GuildID {
 			log.Info("Skipping non-test guild")
 			return
 		}
@@ -32,6 +32,16 @@ func MessageReactionAdd(log *logrus.Entry, testGuildID *string) func(s *discordg
 
 		log.Info("Pinning message")
 
-		commandhandlers.PinMessageCommandHandler(&commandhandlers.PinMessageCommand{Event: e}, s, log)
+		m, err := s.ChannelMessage(e.ChannelID, e.MessageID)
+		if err != nil {
+			log.WithError(err).Error("Could not get channel message")
+			return
+		}
+
+		commandhandlers.PinMessageCommandHandler(&commandhandlers.PinMessageCommand{
+			GuildID:  e.GuildID,
+			Message:  m,
+			PinnedBy: e.Member.User,
+		}, s, log)
 	}
 }
