@@ -1,6 +1,6 @@
 # Pinbot
 
-[Install 📌](https://discord.com/oauth2/authorize?client_id=921554139740254209&permissions=3136&redirect_uri=https%3A%2F%2Fgithub.com%2Felliotwms%2Fpinbot&scope=scope=applications.commands%20bot)
+[Install 📌](https://discord.com/oauth2/authorize?client_id=921554139740254209&permissions=3136&redirect_uri=https%3A%2F%2Fgithub.com%2Felliotwms%2Fpinbot&scope=applications.commands%20bot)
 
 Whenever you react to a message with a pushpin 📌 emoji, Pinbot posts the message to a channel.
 
