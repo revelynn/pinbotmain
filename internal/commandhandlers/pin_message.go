@@ -9,9 +9,11 @@ import (
 )
 
 const (
-	emojiSeen = "👀"
-	emojiErr  = "💩"
-	emojiDone = "✅"
+	emojiSeen    = "👀"
+	emojiErr     = "💩"
+	emojiDone    = "✅"
+	emojiSelfPin = "🔄"
+	emojiNo      = "🚫"
 )
 
 type PinMessageCommand struct {
@@ -30,13 +32,19 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 
 	l.Info("Pinning message")
 
+	// acknowledge the message
+	l.Debug("Acknowledging message")
+	react(s, m, emojiSeen, l)
+
 	if !config.SelfPinEnabled && m.Author.ID == s.State.User.ID {
-		l.Info("Ignoring self pin")
+		l.Debug("Ignoring self pin")
+		react(s, m, emojiSelfPin, l)
 		return
 	}
 
-	if isExcludedChannel(m.ChannelID) {
-		l.Info("Skipping excluded channel")
+	if config.IsExcludedChannel(m.ChannelID) {
+		l.Debug("Skipping excluded channel")
+		react(s, m, emojiNo, l)
 		return
 	}
 
@@ -49,21 +57,11 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 		return
 	}
 
-	// acknowledge the message
-	l.Debug("Acknowledging message")
-	if err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiSeen); err != nil {
-		l.WithError(err).Error("Could not acknowledge the message")
-		return
-	}
-
 	// determine the target pin channel for the message
 	pinChannel, err := getTargetChannel(s, c.GuildID, m.ChannelID)
 	if err != nil {
 		l.WithError(err).Error("Could not get target channel")
-		err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiErr)
-		if err != nil {
-			l.WithError(err).Error("Could not mark the message as failed")
-		}
+		react(s, m, emojiErr, l)
 		return
 	}
 
@@ -76,31 +74,19 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 	_, err = s.ChannelMessageSendComplex(pinChannel, pinMessage)
 	if err != nil {
 		l.WithError(err).Error("Could not send message")
-		err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiErr)
-		if err != nil {
-			l.WithError(err).Error("Could not mark the message as failed")
-		}
+		react(s, m, emojiErr, l)
 		return
 	}
 
 	// mark the message as done
 	l.Debug("Marking message as done")
-	err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiDone)
-	if err != nil {
-		l.WithError(err).Error("Could not mark the message as done")
-
-		return
-	}
+	react(s, m, emojiDone, l)
 }
 
-func isExcludedChannel(id string) bool {
-	for _, c := range config.ExcludedChannels {
-		if c == id {
-			return true
-		}
+func react(s *discordgo.Session, m *discordgo.Message, emoji string, l *logrus.Entry) {
+	if err := s.MessageReactionAdd(m.ChannelID, m.ID, emoji); err != nil {
+		l.WithError(err).Error("Could not react to message")
 	}
-
-	return false
 }
 
 func buildPinMessage(c *PinMessageCommand, m *discordgo.Message) *discordgo.MessageSend {

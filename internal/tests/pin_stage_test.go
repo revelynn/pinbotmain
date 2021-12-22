@@ -1,11 +1,6 @@
 package tests
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -164,31 +159,9 @@ func (s *PinStage) handleMessageFor(channelID string) func(*discordgo.Session, *
 	}
 }
 
-type MockRoundTripper func(request *http.Request) (*http.Response, error)
-
-func (m MockRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
-	return m(request)
-}
-
-func (s *PinStage) the_message_is_already_pinned() {
-	s.session.Client.Transport = MockRoundTripper(func(request *http.Request) (*http.Response, error) {
-		expectedPath := discordgo.EndpointMessageReactions(s.message.ChannelID, s.message.ID, url.PathEscape("✅"))
-		if request.Method == http.MethodGet && request.URL.String() == expectedPath {
-			bs, err := json.Marshal([]*discordgo.User{
-				{ID: s.session.State.User.ID},
-			})
-			s.require.NoError(err)
-
-			s.session.Client.Transport = nil
-
-			return &http.Response{
-				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(bytes.NewReader(bs)),
-			}, nil
-		}
-
-		return http.DefaultTransport.RoundTrip(request)
-	})
+func (s *PinStage) the_message_is_already_marked_as_pinned() {
+	s.require.NoError(s.session.MessageReactionAdd(s.message.ChannelID, s.message.ID, "👀"))
+	s.require.NoError(s.session.MessageReactionAdd(s.message.ChannelID, s.message.ID, "✅"))
 }
 
 func (s *PinStage) the_bot_should_log_the_message_as_already_pinned() *PinStage {
@@ -204,10 +177,6 @@ func (s *PinStage) self_pin_is_disabled() *PinStage {
 	})
 
 	return s
-}
-
-func (s *PinStage) the_bot_should_log_the_message_as_an_avoided_self_pin() *PinStage {
-	return s.the_bot_should_log("Ignoring self pin")
 }
 
 func (s *PinStage) the_message_is_pinned() *PinStage {
@@ -284,10 +253,6 @@ func (s *PinStage) the_channel_is_excluded() *PinStage {
 	return s
 }
 
-func (s *PinStage) the_bot_should_log_the_message_as_a_skipped_excluded_channel() *PinStage {
-	return s.the_bot_should_log("Skipping excluded channel")
-}
-
 func (s *PinStage) the_bot_should_log(log string) *PinStage {
 	s.require.Eventually(func() bool {
 		for _, e := range s.logHook.AllEntries() {
@@ -300,4 +265,10 @@ func (s *PinStage) the_bot_should_log(log string) *PinStage {
 	}, 1*time.Second, 10*time.Millisecond)
 
 	return s
+}
+
+func (s *PinStage) the_bot_should_react_with_successful_emoji() *PinStage {
+	return s.
+		the_bot_should_add_the_emoji("👀").and().
+		the_bot_should_add_the_emoji("✅")
 }

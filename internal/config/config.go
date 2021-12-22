@@ -39,3 +39,13 @@ func mustGetEnv(s string) string {
 	}
 	return token
 }
+
+func IsExcludedChannel(id string) bool {
+	for _, c := range ExcludedChannels {
+		if c == id {
+			return true
+		}
+	}
+
+	return false
+}

@@ -16,6 +16,7 @@ var log = logrus.New()
 
 func main() {
 	config.Configure()
+	log.Infof("Excluding channels: %s", config.ExcludedChannels)
 
 	s, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
