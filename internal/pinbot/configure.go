@@ -15,6 +15,7 @@ func (bot *Bot) registerHandlers() func() {
 		bot.session.AddHandler(eventhandlers.ChannelUpdate(bot.log.WithField(logFieldHandler, "ChannelUpdate"))),
 		bot.session.AddHandler(eventhandlers.ChannelDelete(bot.log.WithField(logFieldHandler, "ChannelDelete"))),
 		bot.session.AddHandler(eventhandlers.InteractionCreate(bot.log.WithField(logFieldHandler, "InteractionCreate"))),
+		bot.session.AddHandler(eventhandlers.ChannelPinsUpdate(bot.log.WithField(logFieldHandler, "ChannelPinsUpdate"))),
 	}
 
 	return func() {
