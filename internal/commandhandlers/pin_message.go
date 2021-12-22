@@ -34,6 +34,12 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 
 	if !config.SelfPinEnabled && m.Author.ID == s.State.User.ID {
 		l.Info("Ignoring self pin")
+		return
+	}
+
+	if isExcludedChannel(m.ChannelID) {
+		l.Info("Skipping excluded channel")
+		return
 	}
 
 	pinned, err := isAlreadyPinned(s, m)
@@ -87,6 +93,16 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 
 		return
 	}
+}
+
+func isExcludedChannel(id string) bool {
+	for _, c := range config.ExcludedChannels {
+		if c == id {
+			return true
+		}
+	}
+
+	return false
 }
 
 func buildPinMessage(c *PinMessageCommand, m *discordgo.Message) *discordgo.MessageSend {

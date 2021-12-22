@@ -185,3 +185,18 @@ func TestPinWithFile(t *testing.T) {
 		the_pin_message_should_have_n_embeds(1).and().
 		the_pin_message_should_have_n_embeds_with_url(0)
 }
+
+func TestPinInExcludedChannel(t *testing.T) {
+	given, when, then := NewPinStage(t)
+
+	given.
+		a_channel_named("test").and().
+		the_channel_is_excluded().and().
+		the_message_is_posted()
+
+	when.
+		the_message_is_reacted_to_with("📌")
+
+	then.
+		the_bot_should_log_the_message_as_a_skipped_excluded_channel()
+}

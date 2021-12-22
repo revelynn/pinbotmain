@@ -13,7 +13,8 @@ var (
 
 	TestGuildID string
 
-	SelfPinEnabled bool
+	SelfPinEnabled   bool
+	ExcludedChannels []string
 )
 
 var once sync.Once
@@ -24,6 +25,10 @@ func Configure() {
 		ApplicationID = mustGetEnv("APPLICATION_ID")
 		TestGuildID = os.Getenv("TEST_GUILD_ID")
 		SelfPinEnabled = strings.ToLower(os.Getenv("SELF_PIN_ENABLED")) == "true"
+
+		if s, ok := os.LookupEnv("EXCLUDED_CHANNELS"); ok {
+			ExcludedChannels = strings.Split(s, ",")
+		}
 	})
 }
 

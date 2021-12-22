@@ -191,16 +191,8 @@ func (s *PinStage) the_message_is_already_pinned() {
 	})
 }
 
-func (s *PinStage) the_bot_should_log_the_message_as_already_pinned() {
-	s.require.Eventually(func() bool {
-		for _, e := range s.logHook.AllEntries() {
-			if e.Message == "Message already pinned" {
-				return true
-			}
-		}
-
-		return false
-	}, 1*time.Second, 10*time.Millisecond)
+func (s *PinStage) the_bot_should_log_the_message_as_already_pinned() *PinStage {
+	return s.the_bot_should_log("Message already pinned")
 }
 
 func (s *PinStage) self_pin_is_disabled() *PinStage {
@@ -214,16 +206,8 @@ func (s *PinStage) self_pin_is_disabled() *PinStage {
 	return s
 }
 
-func (s *PinStage) the_bot_should_log_the_message_as_an_avoided_self_pin() {
-	s.require.Eventually(func() bool {
-		for _, e := range s.logHook.AllEntries() {
-			if e.Message == "Ignoring self pin" {
-				return true
-			}
-		}
-
-		return false
-	}, 1*time.Second, 10*time.Millisecond)
+func (s *PinStage) the_bot_should_log_the_message_as_an_avoided_self_pin() *PinStage {
+	return s.the_bot_should_log("Ignoring self pin")
 }
 
 func (s *PinStage) the_message_is_pinned() *PinStage {
@@ -291,6 +275,29 @@ func (s *PinStage) the_import_is_cleaned_up() *PinStage {
 	s.messages = []*discordgo.Message{}
 
 	s.require.NoError(s.session.MessageReactionsRemoveAll(s.message.ChannelID, s.message.ID))
+
+	return s
+}
+
+func (s *PinStage) the_channel_is_excluded() *PinStage {
+	config.ExcludedChannels = append(config.ExcludedChannels, s.channel.ID)
+	return s
+}
+
+func (s *PinStage) the_bot_should_log_the_message_as_a_skipped_excluded_channel() *PinStage {
+	return s.the_bot_should_log("Skipping excluded channel")
+}
+
+func (s *PinStage) the_bot_should_log(log string) *PinStage {
+	s.require.Eventually(func() bool {
+		for _, e := range s.logHook.AllEntries() {
+			if e.Message == log {
+				return true
+			}
+		}
+
+		return false
+	}, 1*time.Second, 10*time.Millisecond)
 
 	return s
 }
