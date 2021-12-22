@@ -226,8 +226,10 @@ func (s *PinStage) the_bot_should_log_the_message_as_an_avoided_self_pin() {
 	}, 1*time.Second, 10*time.Millisecond)
 }
 
-func (s *PinStage) the_message_is_pinned() {
+func (s *PinStage) the_message_is_pinned() *PinStage {
 	s.require.NoError(s.session.ChannelMessagePin(s.channel.ID, s.message.ID))
+
+	return s
 }
 
 func (s *PinStage) an_import_is_triggered() {
@@ -278,6 +280,17 @@ func (s *PinStage) the_pin_message_should_have_n_embeds_with_url(n int) {
 
 func (s *PinStage) the_pin_message_should_have_n_embeds(n int) *PinStage {
 	s.require.Len(s.pinMessage.Embeds, n)
+
+	return s
+}
+
+func (s *PinStage) the_import_is_cleaned_up() *PinStage {
+	s.a_pin_message_should_be_posted_in_the_last_channel()
+
+	s.require.NoError(s.session.ChannelMessageDelete(s.pinMessage.ChannelID, s.pinMessage.ID))
+	s.messages = []*discordgo.Message{}
+
+	s.require.NoError(s.session.MessageReactionsRemoveAll(s.message.ChannelID, s.message.ID))
 
 	return s
 }

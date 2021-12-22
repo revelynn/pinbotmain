@@ -82,13 +82,30 @@ func TestPinSelfPinDisabled(t *testing.T) {
 		the_bot_should_log_the_message_as_an_avoided_self_pin()
 }
 
+func TestPinClassicPinTriggersChannelImport(t *testing.T) {
+	given, when, then := NewPinStage(t)
+
+	given.
+		a_channel_named("test").and().
+		the_message_is_posted()
+
+	when.
+		the_message_is_pinned()
+
+	then.
+		a_pin_message_should_be_posted_in_the_last_channel().and().
+		the_bot_should_add_the_emoji("👀").and().
+		the_bot_should_add_the_emoji("✅")
+}
+
 func TestPinImportCommand(t *testing.T) {
 	given, when, then := NewPinStage(t)
 
 	given.
 		a_channel_named("test").and().
 		the_message_is_posted().and().
-		the_message_is_pinned()
+		the_message_is_pinned().and().
+		the_import_is_cleaned_up()
 
 	when.
 		an_import_is_triggered()
@@ -111,9 +128,7 @@ func TestPinImportCommandIgnoreAlreadyPinned(t *testing.T) {
 		an_import_is_triggered()
 
 	then.
-		a_pin_message_should_be_posted_in_the_last_channel().and().
-		the_bot_should_add_the_emoji("👀").and().
-		the_bot_should_add_the_emoji("✅")
+		the_bot_should_log_the_message_as_already_pinned()
 }
 
 func TestPinWithImage(t *testing.T) {
