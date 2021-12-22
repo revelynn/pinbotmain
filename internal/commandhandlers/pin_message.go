@@ -65,45 +65,10 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 
 	l = l.WithField("target_channel_id", pinChannel)
 
+	// build the rich embed pin message
+	pinMessage := buildPinMessage(c, m)
+
 	// send the pin message
-	embed := &discordgo.MessageEmbed{
-		Title:       "📌 New Pin",
-		Description: fmt.Sprintf("%s said: %s", m.Author.Mention(), m.Content),
-		URL:         fmt.Sprintf("https://discord.com/channels/%s/%s/%s", c.GuildID, m.ChannelID, m.ID),
-	}
-
-	if c.PinnedBy != nil {
-		embed.Footer = &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("Pinned by %s", c.PinnedBy.String()),
-		}
-	}
-
-	// If there's only one attachment then add it to the message embed
-	if len(m.Attachments) == 1 {
-		embed.Image = &discordgo.MessageEmbedImage{
-			URL: m.Attachments[0].URL,
-		}
-	}
-
-	pinMessage := &discordgo.MessageSend{
-		Embeds: []*discordgo.MessageEmbed{embed},
-	}
-
-	// If there are multiple attachments then add them to separate embeds
-	if len(m.Attachments) > 1 {
-		for _, a := range m.Attachments {
-			pinMessage.Embeds = append(pinMessage.Embeds, &discordgo.MessageEmbed{
-				Type: discordgo.EmbedTypeImage,
-				Image: &discordgo.MessageEmbedImage{
-					URL:      a.URL,
-					ProxyURL: a.ProxyURL,
-					Width:    a.Width,
-					Height:   a.Height,
-				},
-			})
-		}
-	}
-
 	_, err = s.ChannelMessageSendComplex(pinChannel, pinMessage)
 	if err != nil {
 		l.WithError(err).Error("Could not send message")
@@ -122,6 +87,45 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 
 		return
 	}
+}
+
+func buildPinMessage(c *PinMessageCommand, m *discordgo.Message) *discordgo.MessageSend {
+	embed := &discordgo.MessageEmbed{
+		Title:       "📌 New Pin",
+		Description: fmt.Sprintf("%s said: %s", m.Author.Mention(), m.Content),
+		URL:         fmt.Sprintf("https://discord.com/channels/%s/%s/%s", c.GuildID, m.ChannelID, m.ID),
+	}
+
+	if c.PinnedBy != nil {
+		embed.Footer = &discordgo.MessageEmbedFooter{
+			Text: fmt.Sprintf("Pinned by %s", c.PinnedBy.String()),
+		}
+	}
+
+	pinMessage := &discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{embed},
+	}
+
+	// If there are multiple attachments then add them to separate embeds
+	for i, a := range m.Attachments {
+		if a.Width == 0 || a.Height == 0 {
+			// only embed images
+			continue
+		}
+		e := &discordgo.MessageEmbedImage{URL: a.URL}
+
+		if i == 0 {
+			// add the first image to the existing embed
+			pinMessage.Embeds[0].Image = e
+		} else {
+			// add any other images to their own embed
+			pinMessage.Embeds = append(pinMessage.Embeds, &discordgo.MessageEmbed{
+				Type:  discordgo.EmbedTypeImage,
+				Image: e,
+			})
+		}
+	}
+	return pinMessage
 }
 
 func isAlreadyPinned(s *discordgo.Session, m *discordgo.Message) (bool, error) {

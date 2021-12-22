@@ -149,6 +149,24 @@ func TestPinWithMultipleImage(t *testing.T) {
 
 	then.
 		a_pin_message_should_be_posted_in_the_last_channel().and().
-		the_pin_message_should_have_n_embeds(3).and().
+		the_pin_message_should_have_n_embeds(2).and().
 		the_pin_message_should_have_n_embeds_with_url(2)
+}
+
+func TestPinWithFile(t *testing.T) {
+	given, when, then := NewPinStage(t)
+
+	given.
+		a_channel_named("test").and().
+		a_message().and().
+		a_file_attachment().and().
+		the_message_is_posted()
+
+	when.
+		the_message_is_reacted_to_with("📌")
+
+	then.
+		a_pin_message_should_be_posted_in_the_last_channel().and().
+		the_pin_message_should_have_n_embeds(1).and().
+		the_pin_message_should_have_n_embeds_with_url(0)
 }

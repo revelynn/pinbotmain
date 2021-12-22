@@ -237,20 +237,28 @@ func (s *PinStage) an_import_is_triggered() {
 	}, s.session, s.log.WithField("test", true))
 }
 
-func (s *PinStage) an_image_attachment() *PinStage {
-	f, err := os.Open("files/cheese.jpg")
+func (s *PinStage) an_attachment(filename, contentType string) *PinStage {
+	f, err := os.Open("files/" + filename)
 	s.require.NoError(err)
 	s.sendMessage.Files = append(s.sendMessage.Files, &discordgo.File{
-		Name:        "cheese.jpg",
-		ContentType: "image/jpeg",
+		Name:        filename,
+		ContentType: contentType,
 		Reader:      f,
 	})
 
 	return s
 }
 
+func (s *PinStage) an_image_attachment() *PinStage {
+	return s.an_attachment("cheese.jpg", "image/jpeg")
+}
+
 func (s *PinStage) another_image_attachment() *PinStage {
 	return s.an_image_attachment()
+}
+
+func (s *PinStage) a_file_attachment() *PinStage {
+	return s.an_attachment("hello.txt", "text/plain")
 }
 
 func (s *PinStage) the_pin_message_should_have_an_image_embed() {
