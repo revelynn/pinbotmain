@@ -26,7 +26,7 @@ func Configure() {
 		TestGuildID = os.Getenv("TEST_GUILD_ID")
 		SelfPinEnabled = strings.ToLower(os.Getenv("SELF_PIN_ENABLED")) == "true"
 
-		if s, ok := os.LookupEnv("EXCLUDED_CHANNELS"); ok {
+		if s, ok := os.LookupEnv("EXCLUDED_CHANNELS"); ok && s != "" {
 			ExcludedChannels = strings.Split(s, ",")
 		}
 	})
