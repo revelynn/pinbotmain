@@ -1,12 +1,10 @@
 package commandhandlers
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/elliotwms/pinbot/internal/config"
-	"github.com/elliotwms/pinbot/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 
@@ -59,7 +57,7 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 	}
 
 	// determine the target pin channel for the message
-	pinChannel, err := getTargetChannel(c.GuildID, m.ChannelID)
+	pinChannel, err := getTargetChannel(s, c.GuildID, m.ChannelID)
 	if err != nil {
 		l.WithError(err).Error("Could not get target channel")
 		err = s.MessageReactionAdd(m.ChannelID, m.ID, emojiErr)
@@ -163,35 +161,28 @@ func isAlreadyPinned(s *discordgo.Session, m *discordgo.Message) (bool, error) {
 // #channel-pins (a specific pin channel)
 // #pins (a generic pin channel)
 // #channel (the channel itself)
-func getTargetChannel(guildID, channelID string) (string, error) {
-	k, _ := storage.Guilds.LoadOrStore(guildID, &storage.GuildChannels{})
-	gc, ok := k.(*storage.GuildChannels)
-	if !ok {
-		return "", errors.New("map did not contain type *storage.GuildChannels")
+func getTargetChannel(s *discordgo.Session, guildID, channelID string) (string, error) {
+	origin, err := s.State.GuildChannel(guildID, channelID)
+	if err != nil {
+		return "", err
 	}
 
-	// get the channel
-	var channel *discordgo.Channel
-
-	for _, c := range gc.Channels {
-		if c.ID == channelID {
-			channel = c
-			break
-		}
+	guild, err := s.State.Guild(guildID)
+	if err != nil {
+		return "", err
 	}
 
-	if channel == nil {
-		return "", errors.New("missing channel from map")
-	}
+	// use the same channel by default
+	channel := origin
 
 	// check for #channel-pins
-	for _, c := range gc.Channels {
+	for _, c := range guild.Channels {
 		if c.Name == channel.Name+"-pins" {
 			return c.ID, nil
 		}
 	}
 
-	for _, c := range gc.Channels {
+	for _, c := range guild.Channels {
 		if c.Name == "pins" {
 			return c.ID, nil
 		}

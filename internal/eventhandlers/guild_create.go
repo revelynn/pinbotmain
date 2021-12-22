@@ -19,12 +19,5 @@ func GuildCreate(log *logrus.Entry, applicationID string, guildID string) func(s
 			ApplicationID: applicationID,
 			GuildID:       guildID,
 		}, s, log)
-
-		for _, c := range e.Channels {
-			commandhandlers.SaveChannelCommandHandler(&commandhandlers.SaveChannelCommand{
-				GuildID: e.Guild.ID,
-				Channel: c,
-			}, s, log)
-		}
 	}
 }
