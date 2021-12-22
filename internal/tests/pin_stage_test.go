@@ -35,6 +35,7 @@ type PinStage struct {
 	expectedPinsChannel *discordgo.Channel
 	message             *discordgo.Message
 	messages            []*discordgo.Message
+	pinMessage          *discordgo.Message
 }
 
 func NewPinStage(t *testing.T) (*PinStage, *PinStage, *PinStage) {
@@ -97,7 +98,7 @@ func (s *PinStage) a_message() *PinStage {
 }
 
 func (s *PinStage) the_message_is_posted() *PinStage {
-	if s.message == nil {
+	if s.sendMessage == nil {
 		s.a_message()
 	}
 
@@ -122,12 +123,12 @@ func (s *PinStage) a_pin_message_should_be_posted_in_the_last_channel() *PinStag
 				continue
 			}
 
-			if len(m.Embeds) != 1 {
-				continue
+			for _, embed := range m.Embeds {
+				if embed.Title == "📌 New Pin" && strings.Contains(embed.Description, s.sendMessage.Content) {
+					s.pinMessage = m
+					return true
+				}
 			}
-
-			embed := m.Embeds[0]
-			return embed.Title == "📌 New Pin" && strings.Contains(embed.Description, s.sendMessage.Content)
 		}
 
 		return false
@@ -234,4 +235,41 @@ func (s *PinStage) an_import_is_triggered() {
 		GuildID:   config.TestGuildID,
 		ChannelID: s.channel.ID,
 	}, s.session, s.log.WithField("test", true))
+}
+
+func (s *PinStage) an_image_attachment() *PinStage {
+	f, err := os.Open("files/cheese.jpg")
+	s.require.NoError(err)
+	s.sendMessage.Files = append(s.sendMessage.Files, &discordgo.File{
+		Name:        "cheese.jpg",
+		ContentType: "image/jpeg",
+		Reader:      f,
+	})
+
+	return s
+}
+
+func (s *PinStage) another_image_attachment() *PinStage {
+	return s.an_image_attachment()
+}
+
+func (s *PinStage) the_pin_message_should_have_an_image_embed() {
+	s.the_pin_message_should_have_n_embeds_with_url(1)
+}
+
+func (s *PinStage) the_pin_message_should_have_n_embeds_with_url(n int) {
+	found := 0
+	for _, embed := range s.pinMessage.Embeds {
+		if embed.Image != nil && embed.Image.URL != "" {
+			found++
+		}
+	}
+
+	s.require.Equal(n, found)
+}
+
+func (s *PinStage) the_pin_message_should_have_n_embeds(n int) *PinStage {
+	s.require.Len(s.pinMessage.Embeds, n)
+
+	return s
 }
