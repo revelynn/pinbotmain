@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -16,25 +15,29 @@ var log = logrus.New()
 
 func main() {
 	config.Configure()
-	log.Infof("Excluding channels: %s", config.ExcludedChannels)
+	log.SetLevel(config.LogLevel)
+
+	logrus.
+		WithFields(config.Output(log.IsLevelEnabled(logrus.TraceLevel))).
+		Info("Starting Pinbot")
 
 	s, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
 		panic(err)
 	}
 
-	if strings.ToLower(os.Getenv("DEBUG")) == "true" {
+	if log.IsLevelEnabled(logrus.TraceLevel) {
 		s.LogLevel = discordgo.LogDebug
 	}
 
 	bot := pinbot.New(config.ApplicationID, s, log)
 
-	if id := os.Getenv("TEST_GUILD_ID"); id != "" {
-		bot.WithTestGuildID(id)
+	if config.TestGuildID != "" {
+		bot.WithTestGuildID(config.TestGuildID)
 	}
 
-	if addr := os.Getenv("HEALTH_CHECK_ADDR"); addr != "" {
-		bot.WithHealthCheck(addr)
+	if config.HealthCheckAddr != "" {
+		bot.WithHealthCheck(config.HealthCheckAddr)
 	}
 
 	sc := make(chan os.Signal, 1)

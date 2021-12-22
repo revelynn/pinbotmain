@@ -9,8 +9,8 @@ const logFieldHandler = "handler"
 func (bot *Bot) registerHandlers() func() {
 	closers := []func(){
 		bot.session.AddHandler(eventhandlers.Ready(bot.log.WithField(logFieldHandler, "Ready"))),
-		bot.session.AddHandler(eventhandlers.MessageReactionAdd(bot.log.WithField(logFieldHandler, "MessageReactionAdd"), bot.testGuildID)),
-		bot.session.AddHandler(eventhandlers.GuildCreate(bot.log.WithField(logFieldHandler, "GuildCreate"), bot.applicationID, bot.testGuildID)),
+		bot.session.AddHandler(eventhandlers.MessageReactionAdd(bot.log.WithField(logFieldHandler, "MessageReactionAdd"))),
+		bot.session.AddHandler(eventhandlers.GuildCreate(bot.log.WithField(logFieldHandler, "GuildCreate"))),
 		bot.session.AddHandler(eventhandlers.InteractionCreate(bot.log.WithField(logFieldHandler, "InteractionCreate"))),
 		bot.session.AddHandler(eventhandlers.ChannelPinsUpdate(bot.log.WithField(logFieldHandler, "ChannelPinsUpdate"))),
 	}

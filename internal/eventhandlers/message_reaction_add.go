@@ -3,20 +3,19 @@ package eventhandlers
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/elliotwms/pinbot/internal/commandhandlers"
+	"github.com/elliotwms/pinbot/internal/config"
 	"github.com/sirupsen/logrus"
 )
 
-func MessageReactionAdd(log *logrus.Entry, testGuildID string) func(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
+func MessageReactionAdd(log *logrus.Entry) func(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
 	return func(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
 		log.WithField("emoji", e.Emoji.Name).Info("Received reaction")
-
-		if e.Emoji.Name != "📌" {
-			// only react to pin emojis
+		if !config.ShouldActOnGuild(e.GuildID) {
 			return
 		}
 
-		if testGuildID != "" && testGuildID != e.GuildID {
-			log.Info("Skipping non-test guild")
+		if e.Emoji.Name != "📌" {
+			// only react to pin emojis
 			return
 		}
 

@@ -29,14 +29,14 @@ docker run -e TOKEN -e APPLICATION_ID ghcr.io/elliotwms/pinbot:{version}
 
 ## Configuration
 
-| Variable            | Description                                                            | Required |
-|---------------------|------------------------------------------------------------------------|----------|
-| `TOKEN`             | Bot token ID                                                           | `true`   |
-| `APPLICATION_ID`    | Bot application ID                                                     | `true`   |
-| `TEST_GUILD_ID`     | When specified, the bot should only respond to pins in this test guild | `false`  |
-| `HEALTH_CHECK_ADDR` | Address to serve the `/v1/health/` endpoint on (e.g. `:8080`)          | `false`  |
-| `EXCLUDED_CHANNELS` | Comma-separated list of excluded channel IDs                           | `false`  |
-| `DEBUG`             | Output debug Discord client logs                                       | `false`  |
+| Variable            | Description                                                                                          | Required |
+|---------------------|------------------------------------------------------------------------------------------------------|----------|
+| `TOKEN`             | Bot token ID                                                                                         | `true`   |
+| `APPLICATION_ID`    | Bot application ID                                                                                   | `true`   |
+| `TEST_GUILD_ID`     | When specified, the bot should only respond to pins in this test guild                               | `false`  |
+| `HEALTH_CHECK_ADDR` | Address to serve the `/v1/health/` endpoint on (e.g. `:8080`)                                        | `false`  |
+| `EXCLUDED_CHANNELS` | Comma-separated list of excluded channel IDs                                                         | `false`  |
+| `LOG_LEVEL`         | [Log level](https://github.com/sirupsen/logrus#level-logging). `trace` enables discord-go debug logs | `false`  |
 
 ## Testing
 
