@@ -17,7 +17,7 @@ func main() {
 	config.Configure()
 	log.SetLevel(config.LogLevel)
 
-	logrus.
+	log.
 		WithFields(config.Output(log.IsLevelEnabled(logrus.TraceLevel))).
 		Info("Starting Pinbot")
 
