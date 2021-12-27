@@ -10,6 +10,9 @@ Pinbot uses the channel name to decide where it will post. In order of priority 
 3. `#{channel}`, the channel the pin was posted in, so that if you don't want a separate pins channel you can instead 
 search for pins by @pinbot in the channel
 
+Whenever Pinbot pins a message, or whenever you update the actual channel pins, Pinbot will trigger a reimport of all 
+the channel's pins. You can also trigger this manually with the `/import` command.
+
 Don't forget that pinbot needs [permission](#permissions) to see and post in these channels, otherwise it won't be able to do its job.
 
 ⚠️ Note that this bot is currently in _beta_. There may be bugs, please [report them](https://github.com/elliotwms/pinbot/issues/new?labels=bug&template=bug_report.md) ⚠️
