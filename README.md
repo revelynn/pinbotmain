@@ -44,8 +44,8 @@ Pinbot requires the following permissions to function in any channels you intend
 
 Pinbot is designed to be run as the managed application above, but if you prefer (or if you don't trust a bot with 
 permission to read and relay your messages) you can run your own. You will need to [create a new bot](https://discord.com/developers/applications),
-obtain the token and application ID, and install the bot to your server (replace the install link above with your client
-ID).
+obtain the token and application ID, and install the bot to your server (Pinbot will output a link to install the bot to
+your servers in the "Starting Pinbot" message when it's run).
 
 Part of the build pipeline includes building a Docker image which is [pushed to ghcr](https://github.com/elliotwms/pinbot/pkgs/container/pinbot).
 
@@ -82,9 +82,10 @@ In order to run these test yourself you will need to:
 If you would rather view the bot activity, then it's also possible to use an existing guild instead of creating and
 destroying one for each test run.
 
-* Invite your bot to your guild, giving it the usual bot permissions as well as:
+* Invite your bot to your guild, giving it the usual bot permissions as well additional permissions required to run the 
+tests. A link will be output at the start of the tests to install the bot which requests the base permissions along with 
+the following:
     * Manage Channels (to create channels during tests)
     * Read Messages (to assert on message creation)
     * Manage messages (to pin messages)
-    * You can probably use some variation of this link: `https://discord.com/oauth2/authorize?client_id={bot_client_id}&permissions=76880&redirect_uri=http%3A%2F%2Flocalhost&scope=applications.commands%20bot`
 * Set the `TEST_GUILD_ID` environment variable to the test guild's ID when running the tests [as above](#testing)
