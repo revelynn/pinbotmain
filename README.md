@@ -4,22 +4,47 @@
 
 Whenever you react to a message with a pushpin 📌 emoji, Pinbot posts the message to a channel.
 
-For a channel with name `#channel` it will look for the following channels:
+Pinbot uses the channel name to decide where it will post. In order of priority it will pin in:
+1. `#{channel}-pins`, where `channel` is the name of the channel the message was pinned in
+2. `#pins`, a general pins channel
+3. `#{channel}`, the channel the pin was posted in, so that if you don't want a separate pins channel you can instead 
+search for pins by @pinbot in the channel
 
-* `#channel-pins` (a specific pin channel)
-* `#pins` (a general pin channel)
-* `#channel` (falls back to the channel itself)
+Don't forget that pinbot needs [permission](#permissions) to see and post in these channels, otherwise it won't be able to do its job.
 
-You should set up a channel _that is only writeable by the bot_ as the pin channel
+⚠️ Note that this bot is currently in _beta_. There may be bugs, please [report them](https://github.com/elliotwms/pinbot/issues/new?labels=bug&template=bug_report.md) ⚠️
 
-⚠️ Note that this bot is currently in _alpha_ and is used at your own risk! ⚠️
+### Emojis
+
+Pinbot will react with the following emojis to provide feedback:
+
+| Emoji | Meaning                                                                                                            |
+|-------|--------------------------------------------------------------------------------------------------------------------|
+| 👀    | Pinbot has seen your message and is currently processing it                                                        |
+| ✅     | Pinbot has successfully pinned your message                                                                        |
+| 💩    | Pinbot could not perform an action for an unspecified reason                                                       |
+| 🔄    | Pinbot could not pin their own message. Pinbot hates recursion                                                     |
+| 🚫    | Pinbot could not pin this message as it was in an excluded channel (only really applicable to self-hosted Pinbots) |
 
 ### Permissions
 
-Pinbot is designed to be run with as few permissions as possible. In order for it to work, it needs to be able to see
-channels and messages, and write messages to whichever channel you have set up as its pin output channel.
+Pinbot is designed to be run with as few permissions as possible, however as part of its core functionality it needs to 
+be able to read the contents of messages in your server. If you're not cool with this then you're welcome to audit the
+code yourself, or [host and run your own Pinbot](#run).
+
+Pinbot requires the following permissions to function in any channels you intend to use it:
+* Read messages (`VIEW_CHANNEL`)
+* Send messages (`SEND_MESSAGES`)
+* Add reactions (`ADD_REACTIONS`)
 
 ## Run
+
+Pinbot is designed to be run as the managed application above, but if you prefer (or if you don't trust a bot with 
+permission to read and relay your messages) you can run your own. You will need to [create a new bot](https://discord.com/developers/applications),
+obtain the token and application ID, and install the bot to your server (replace the install link above with your client
+ID).
+
+Part of the build pipeline includes building a Docker image which is [pushed to ghcr](https://github.com/elliotwms/pinbot/pkgs/container/pinbot).
 
 ```shell
 export TOKEN {bot_token}
@@ -27,7 +52,7 @@ export APPLICATION_ID {bot_application_id}
 docker run -e TOKEN -e APPLICATION_ID ghcr.io/elliotwms/pinbot:{version}
 ```
 
-## Configuration
+### Configuration
 
 | Variable            | Description                                                                                          | Required |
 |---------------------|------------------------------------------------------------------------------------------------------|----------|
@@ -41,13 +66,13 @@ docker run -e TOKEN -e APPLICATION_ID ghcr.io/elliotwms/pinbot:{version}
 ## Testing
 
 `/tests` contains a suite of integration tests which run against the real Discord API in a test guild. It will create
-and destroy a guild for the test run.
+and destroy a guild for the test run (unless you specify a `TEST_GUILD_ID`, in which case it will use an existing one,
+[as explained below](#debugging)).
 
 In order to run these test yourself you will need to:
 
 * [Create a new bot](https://discord.com/developers/applications), obtaining the bot token
-* Run the tests with the following environment variables:
-    * `TOKEN`: the bot token
+* Run the tests with the `TOKEN` and `APPLICATION_ID` environment variables 
 
 ### Debugging
 
@@ -58,5 +83,5 @@ destroying one for each test run.
     * Manage Channels (to create channels during tests)
     * Read Messages (to assert on message creation)
     * Manage messages (to pin messages)
-    * `https://discord.com/oauth2/authorize?client_id={bot_client_id}&permissions=76880&redirect_uri=http%3A%2F%2Flocalhost&scope=applications.commands%20bot`
-* Set the `TEST_GUILD_ID` environment variable to the test guild's ID
+    * You can probably use some variation of this link: `https://discord.com/oauth2/authorize?client_id={bot_client_id}&permissions=76880&redirect_uri=http%3A%2F%2Flocalhost&scope=applications.commands%20bot`
+* Set the `TEST_GUILD_ID` environment variable to the test guild's ID when running the tests [as above](#testing)

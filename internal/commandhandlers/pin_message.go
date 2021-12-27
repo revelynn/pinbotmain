@@ -10,8 +10,8 @@ import (
 
 const (
 	emojiSeen    = "👀"
-	emojiErr     = "💩"
 	emojiDone    = "✅"
+	emojiErr     = "💩"
 	emojiSelfPin = "🔄"
 	emojiNo      = "🚫"
 )
