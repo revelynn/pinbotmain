@@ -23,6 +23,11 @@ func TestMain(m *testing.M) {
 	// enable testing with a single bot by allowing self-pins
 	config.SelfPinEnabled = true
 
+	// add additional testing permissions
+	config.Permissions = config.DefaultPermissions |
+		discordgo.PermissionManageChannels |
+		discordgo.PermissionManageMessages
+
 	openSession()
 	defer closeSession()
 
@@ -37,6 +42,8 @@ func openSession() {
 		panic(err)
 	}
 
+	session.Identify.Intents = config.Intents
+
 	if err := session.Open(); err != nil {
 		panic(err)
 	}
@@ -47,6 +54,7 @@ func openSession() {
 		createGuild()
 	} else {
 		log.Printf("Using test guild ID '%s'", config.TestGuildID)
+		log.Printf("Ensure the bot is installed in the test guild with the additional test permissions: %s", config.BuildInstallURL())
 	}
 }
 

@@ -2,12 +2,23 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/sirupsen/logrus"
 )
+
+const DefaultIntents = discordgo.IntentsGuilds |
+	discordgo.IntentsGuildMessages |
+	discordgo.IntentsGuildMessageReactions
+
+const DefaultPermissions = discordgo.PermissionViewChannel |
+	discordgo.PermissionSendMessages |
+	discordgo.PermissionAddReactions
 
 var (
 	Token            string
@@ -17,6 +28,8 @@ var (
 	LogLevel         logrus.Level
 	SelfPinEnabled   bool
 	ExcludedChannels []string
+	Intents          discordgo.Intent
+	Permissions      int
 )
 
 var once sync.Once
@@ -39,6 +52,20 @@ func Configure() {
 		} else {
 			LogLevel = l
 		}
+
+		Intents = DefaultIntents
+		if s := os.Getenv("INTENTS"); s != "" {
+			if i, err := strconv.Atoi(s); err == nil {
+				Intents = discordgo.Intent(i)
+			}
+		}
+
+		Permissions = DefaultPermissions
+		if s := os.Getenv("PERMISSIONS"); s != "" {
+			if i, err := strconv.Atoi(s); err == nil {
+				Permissions = i
+			}
+		}
 	})
 }
 
@@ -50,6 +77,9 @@ func Output(showSensitive bool) logrus.Fields {
 		"LOG_LEVEL":         LogLevel,
 		"SELF_PIN_ENABLED":  SelfPinEnabled,
 		"EXCLUDED_CHANNELS": ExcludedChannels,
+		"INTENTS":           Intents,
+		"PERMISSIONS":       Permissions,
+		"install_url":       BuildInstallURL().String(),
 	}
 
 	if showSensitive {
@@ -79,4 +109,16 @@ func IsExcludedChannel(id string) bool {
 
 func ShouldActOnGuild(id string) bool {
 	return TestGuildID == "" || TestGuildID == id
+}
+
+func BuildInstallURL() *url.URL {
+	u, _ := url.Parse("https://discord.com/oauth2/authorize")
+
+	q := u.Query()
+	q.Add("client_id", ApplicationID)
+	q.Add("permissions", fmt.Sprintf("%d", Permissions))
+	q.Add("scope", "applications.commands bot")
+	u.RawQuery = q.Encode()
+
+	return u
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/elliotwms/pinbot/internal/config"
 	"github.com/sirupsen/logrus"
 )
 
@@ -50,7 +51,12 @@ func (bot *Bot) Run(notify chan os.Signal) error {
 
 // StartSession starts the session, calls Run (blocking until notify is received), then ends the session
 func (bot *Bot) StartSession(notify chan os.Signal) error {
-	bot.log.Info("Starting bot...")
+	bot.session.Identify.Intents = config.Intents
+
+	bot.log.
+		WithFields(config.Output(bot.log.IsLevelEnabled(logrus.TraceLevel))).
+		Info("Starting Pinbot")
+
 	if err := bot.session.Open(); err != nil {
 		bot.log.WithError(err).Error("Could not open session")
 		return err

@@ -17,10 +17,6 @@ func main() {
 	config.Configure()
 	log.SetLevel(config.LogLevel)
 
-	log.
-		WithFields(config.Output(log.IsLevelEnabled(logrus.TraceLevel))).
-		Info("Starting Pinbot")
-
 	s, err := discordgo.New("Bot " + config.Token)
 	if err != nil {
 		panic(err)
