@@ -4,6 +4,19 @@
 
 Whenever you react to a message with a pushpin 📌 emoji, Pinbot posts the message to a channel.
 
+![Example of a Pinbot message](https://user-images.githubusercontent.com/4396779/147515477-850ab41a-6a89-4746-9f65-e27c259f7602.png)
+
+Pinbot is designed as an extension to Discord's channel pins system. Use Pinbot to:
+* Bypass Discord's 50-pin limit and create a historic stream of all your pins
+* Collect all your server's pins into one place (with optional overrides)
+* Give your server's pins a more permanent home
+
+### Why does this exist?
+
+Discord guilds use pins for a lot more than just highlighting important information. In fact, many guilds use the pin system as a form of memorialising a good joke, a savage putdown, or other memorable moments. As a result, the 50 pin per channel limit means that in order to keep something, you will eventually have to get rid of something else.
+
+### How does it work?
+
 Pinbot uses the channel name to decide where it will post. In order of priority it will pin in:
 1. `#{channel}-pins`, where `channel` is the name of the channel the message was pinned in
 2. `#pins`, a general pins channel
@@ -17,7 +30,7 @@ Don't forget that pinbot needs [permission](#permissions) to see and post in the
 
 ⚠️ Note that this bot is currently in _beta_. There may be bugs, please [report them](https://github.com/elliotwms/pinbot/issues/new?labels=bug&template=bug_report.md) ⚠️
 
-### Emojis
+#### Emojis
 
 Pinbot will react with the following emojis to provide feedback:
 
@@ -29,7 +42,7 @@ Pinbot will react with the following emojis to provide feedback:
 | 🔄    | Pinbot could not pin their own message. Pinbot hates recursion                                                     |
 | 🚫    | Pinbot could not pin this message as it was in an excluded channel (only really applicable to self-hosted Pinbots) |
 
-### Permissions
+#### Permissions
 
 Pinbot is designed to be run with as few permissions as possible, however as part of its core functionality it needs to 
 be able to read the contents of messages in your server. If you're not cool with this then you're welcome to audit the
