@@ -119,7 +119,7 @@ func (s *PinStage) a_pin_message_should_be_posted_in_the_last_channel() *PinStag
 			}
 
 			for _, embed := range m.Embeds {
-				if embed.Title == "📌 New Pin" && strings.Contains(embed.Description, s.sendMessage.Content) {
+				if embed.Title == "📌 Pinned" && strings.Contains(embed.Description, s.sendMessage.Content) {
 					s.pinMessage = m
 					return true
 				}
@@ -217,10 +217,10 @@ func (s *PinStage) a_file_attachment() *PinStage {
 }
 
 func (s *PinStage) the_pin_message_should_have_an_image_embed() {
-	s.the_pin_message_should_have_n_embeds_with_url(1)
+	s.the_pin_message_should_have_n_embeds_with_image_url(1)
 }
 
-func (s *PinStage) the_pin_message_should_have_n_embeds_with_url(n int) {
+func (s *PinStage) the_pin_message_should_have_n_embeds_with_image_url(n int) {
 	found := 0
 	for _, embed := range s.pinMessage.Embeds {
 		if embed.Image != nil && embed.Image.URL != "" {
@@ -271,4 +271,10 @@ func (s *PinStage) the_bot_should_react_with_successful_emoji() *PinStage {
 	return s.
 		the_bot_should_add_the_emoji("👀").and().
 		the_bot_should_add_the_emoji("✅")
+}
+
+func (s *PinStage) the_message_has_a_link() *PinStage {
+	s.sendMessage.Content = s.sendMessage.Content + " https://github.com/elliotwms/pinbot"
+
+	return s
 }

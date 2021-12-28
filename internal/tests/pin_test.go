@@ -165,7 +165,7 @@ func TestPinWithMultipleImage(t *testing.T) {
 		a_pin_message_should_be_posted_in_the_last_channel().and().
 		the_bot_should_react_with_successful_emoji().and().
 		the_pin_message_should_have_n_embeds(2).and().
-		the_pin_message_should_have_n_embeds_with_url(2)
+		the_pin_message_should_have_n_embeds_with_image_url(2)
 }
 
 func TestPinWithFile(t *testing.T) {
@@ -184,7 +184,7 @@ func TestPinWithFile(t *testing.T) {
 		a_pin_message_should_be_posted_in_the_last_channel().and().
 		the_bot_should_react_with_successful_emoji().and().
 		the_pin_message_should_have_n_embeds(1).and().
-		the_pin_message_should_have_n_embeds_with_url(0)
+		the_pin_message_should_have_n_embeds_with_image_url(0)
 }
 
 func TestPinInExcludedChannel(t *testing.T) {
@@ -201,4 +201,22 @@ func TestPinInExcludedChannel(t *testing.T) {
 	then.
 		the_message_is_reacted_to_with("👀").and().
 		the_message_is_reacted_to_with("🚫")
+}
+
+func TestPinPersistsEmbeds(t *testing.T) {
+	given, when, then := NewPinStage(t)
+
+	given.
+		a_channel_named("test").and().
+		a_message().and().
+		the_message_has_a_link().and(). // posting a message with a link will create an embed on the server-side
+		the_message_is_posted()
+
+	when.
+		the_message_is_reacted_to_with("📌")
+
+	then.
+		a_pin_message_should_be_posted_in_the_last_channel().and().
+		the_pin_message_should_have_n_embeds(2).and().
+		the_bot_should_react_with_successful_emoji()
 }
