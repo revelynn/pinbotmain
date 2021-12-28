@@ -146,6 +146,10 @@ func buildPinMessage(sourceChannel *discordgo.Channel, c *PinMessageCommand, m *
 			})
 		}
 	}
+
+	// preserve the existing embeds
+	pinMessage.Embeds = append(pinMessage.Embeds, m.Embeds...)
+
 	return pinMessage
 }
 
