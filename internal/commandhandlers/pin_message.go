@@ -60,6 +60,11 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 	}
 
 	sourceChannel, err := s.State.Channel(m.ChannelID)
+	if err != nil {
+		l.WithError(err).Error("Source channel missing from state")
+		react(s, m, emojiErr, l)
+		return
+	}
 
 	// determine the target pin channel for the message
 	targetChannel, err := getTargetChannel(s, c.GuildID, sourceChannel)
@@ -95,7 +100,11 @@ func react(s *discordgo.Session, m *discordgo.Message, emoji string, l *logrus.E
 
 func buildPinMessage(sourceChannel *discordgo.Channel, c *PinMessageCommand, m *discordgo.Message) *discordgo.MessageSend {
 	fields := []*discordgo.MessageEmbedField{
-		{"Channel", sourceChannel.Mention(), true},
+		{
+			Name:   "Channel",
+			Value:  sourceChannel.Mention(),
+			Inline: true,
+		},
 	}
 
 	url := fmt.Sprintf("https://discord.com/channels/%s/%s/%s", c.GuildID, m.ChannelID, m.ID)
