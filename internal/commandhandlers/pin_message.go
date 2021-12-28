@@ -16,6 +16,8 @@ const (
 	emojiNo      = "🚫"
 )
 
+const pinMessageColor = 0xbb0303
+
 type PinMessageCommand struct {
 	GuildID  string
 	Message  *discordgo.Message
@@ -57,21 +59,23 @@ func PinMessageCommandHandler(c *PinMessageCommand, s *discordgo.Session, log *l
 		return
 	}
 
+	sourceChannel, err := s.State.Channel(m.ChannelID)
+
 	// determine the target pin channel for the message
-	pinChannel, err := getTargetChannel(s, c.GuildID, m.ChannelID)
+	targetChannel, err := getTargetChannel(s, c.GuildID, sourceChannel)
 	if err != nil {
 		l.WithError(err).Error("Could not get target channel")
 		react(s, m, emojiErr, l)
 		return
 	}
 
-	l = l.WithField("target_channel_id", pinChannel)
+	l = l.WithField("target_channel_id", targetChannel.ID)
 
 	// build the rich embed pin message
-	pinMessage := buildPinMessage(c, m)
+	pinMessage := buildPinMessage(sourceChannel, c, m)
 
 	// send the pin message
-	_, err = s.ChannelMessageSendComplex(pinChannel, pinMessage)
+	_, err = s.ChannelMessageSendComplex(targetChannel.ID, pinMessage)
 	if err != nil {
 		l.WithError(err).Error("Could not send message")
 		react(s, m, emojiErr, l)
@@ -89,18 +93,34 @@ func react(s *discordgo.Session, m *discordgo.Message, emoji string, l *logrus.E
 	}
 }
 
-func buildPinMessage(c *PinMessageCommand, m *discordgo.Message) *discordgo.MessageSend {
+func buildPinMessage(sourceChannel *discordgo.Channel, c *PinMessageCommand, m *discordgo.Message) *discordgo.MessageSend {
+	fields := []*discordgo.MessageEmbedField{
+		{"Channel", sourceChannel.Mention(), true},
+	}
+
+	url := fmt.Sprintf("https://discord.com/channels/%s/%s/%s", c.GuildID, m.ChannelID, m.ID)
 	embed := &discordgo.MessageEmbed{
-		Title:       "📌 New Pin",
-		Description: fmt.Sprintf("%s said: %s", m.Author.Mention(), m.Content),
-		URL:         fmt.Sprintf("https://discord.com/channels/%s/%s/%s", c.GuildID, m.ChannelID, m.ID),
+		Author: &discordgo.MessageEmbedAuthor{
+			Name:    m.Author.String(),
+			IconURL: m.Author.AvatarURL(""),
+			URL:     url,
+		},
+		Title:       "📌 Pinned",
+		Color:       pinMessageColor,
+		Description: m.Content,
+		URL:         url,
+		Timestamp:   string(m.Timestamp),
 	}
 
 	if c.PinnedBy != nil {
-		embed.Footer = &discordgo.MessageEmbedFooter{
-			Text: fmt.Sprintf("Pinned by %s", c.PinnedBy.String()),
-		}
+		fields = append(fields, &discordgo.MessageEmbedField{
+			Name:   "Pinned by",
+			Value:  c.PinnedBy.Mention(),
+			Inline: true,
+		})
 	}
+
+	embed.Fields = fields
 
 	pinMessage := &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{embed},
@@ -121,6 +141,7 @@ func buildPinMessage(c *PinMessageCommand, m *discordgo.Message) *discordgo.Mess
 			// add any other images to their own embed
 			pinMessage.Embeds = append(pinMessage.Embeds, &discordgo.MessageEmbed{
 				Type:  discordgo.EmbedTypeImage,
+				Color: pinMessageColor,
 				Image: e,
 			})
 		}
@@ -147,15 +168,10 @@ func isAlreadyPinned(s *discordgo.Session, m *discordgo.Message) (bool, error) {
 // #channel-pins (a specific pin channel)
 // #pins (a generic pin channel)
 // #channel (the channel itself)
-func getTargetChannel(s *discordgo.Session, guildID, channelID string) (string, error) {
-	origin, err := s.State.GuildChannel(guildID, channelID)
-	if err != nil {
-		return "", err
-	}
-
+func getTargetChannel(s *discordgo.Session, guildID string, origin *discordgo.Channel) (*discordgo.Channel, error) {
 	guild, err := s.State.Guild(guildID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// use the same channel by default
@@ -164,15 +180,15 @@ func getTargetChannel(s *discordgo.Session, guildID, channelID string) (string, 
 	// check for #channel-pins
 	for _, c := range guild.Channels {
 		if c.Name == channel.Name+"-pins" {
-			return c.ID, nil
+			return c, nil
 		}
 	}
 
 	for _, c := range guild.Channels {
 		if c.Name == "pins" {
-			return c.ID, nil
+			return c, nil
 		}
 	}
 
-	return channel.ID, nil
+	return channel, nil
 }
