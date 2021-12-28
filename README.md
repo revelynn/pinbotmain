@@ -28,7 +28,7 @@ the channel's pins. You can also trigger this manually with the `/import` comman
 
 Don't forget that pinbot needs [permission](#permissions) to see and post in these channels, otherwise it won't be able to do its job.
 
-⚠️ Note that this bot is currently in _beta_. There may be bugs, please [report them](https://github.com/elliotwms/pinbot/issues/new?labels=bug&template=bug_report.md) ⚠️
+⚠️ Note that this bot is currently in [_beta_](https://github.com/elliotwms/pinbot/milestone/2). There may be bugs, please [report them](https://github.com/elliotwms/pinbot/issues/new?labels=bug&template=bug_report.md) ⚠️
 
 #### Emojis
 
