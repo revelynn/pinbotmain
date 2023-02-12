@@ -68,7 +68,12 @@ func TestPinAlreadyPinned(t *testing.T) {
 		the_bot_should_log_the_message_as_already_pinned()
 }
 
+// TestPinSelfPinDisabled tests the 'correct' behaviour of Pinbot when pinning its own messages.
+// Self-pin is enabled to allow testing via a single bot in a single server
 func TestPinSelfPinDisabled(t *testing.T) {
+	if os.Getenv("FAKEDISCORD") != "" {
+		t.Skip("test incompatible with fakediscord: requires user support")
+	}
 	given, when, then := NewPinStage(t)
 
 	given.
@@ -80,7 +85,7 @@ func TestPinSelfPinDisabled(t *testing.T) {
 		the_message_is_reacted_to_with("📌")
 
 	then.
-		the_message_is_reacted_to_with("🔄")
+		the_bot_should_add_the_emoji("🔄")
 }
 
 func TestPinClassicPinTriggersChannelImport(t *testing.T) {
@@ -103,16 +108,13 @@ func TestPinClassicPinTriggersChannelImport(t *testing.T) {
 }
 
 func TestPinImportCommand(t *testing.T) {
-	if os.Getenv("FAKEDISCORD") != "" {
-		t.Skip("test incompatible with fakediscord")
-	}
-
 	given, when, then := NewPinStage(t)
 
 	given.
 		a_channel_named("test").and().
 		the_message_is_posted().and().
 		the_message_is_pinned().and().
+		the_bot_should_react_with_successful_emoji().and().
 		the_import_is_cleaned_up()
 
 	when.
@@ -242,7 +244,7 @@ func TestPinPersistsEmbeds(t *testing.T) {
 		the_message_is_reacted_to_with("📌")
 
 	then.
+		the_bot_should_react_with_successful_emoji().and().
 		a_pin_message_should_be_posted_in_the_last_channel().and().
-		the_pin_message_should_have_n_embeds(2).and().
-		the_bot_should_react_with_successful_emoji()
+		the_pin_message_should_have_n_embeds(2) // the pin embed + link
 }
