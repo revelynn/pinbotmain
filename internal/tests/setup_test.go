@@ -52,7 +52,10 @@ func openSession() {
 		panic(err)
 	}
 
-	session.LogLevel = discordgo.LogDebug
+	if os.Getenv("TEST_DEBUG") != "" {
+		session.LogLevel = discordgo.LogDebug
+		session.Debug = true
+	}
 
 	session.Identify.Intents = config.Intents
 

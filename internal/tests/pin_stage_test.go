@@ -36,6 +36,10 @@ type PinStage struct {
 func NewPinStage(t *testing.T) (*PinStage, *PinStage, *PinStage) {
 	log := logrus.New()
 
+	if os.Getenv("TEST_DEBUG") != "" {
+		log.SetLevel(logrus.DebugLevel)
+	}
+
 	s := &PinStage{
 		t:       t,
 		log:     log,

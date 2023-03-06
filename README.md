@@ -90,6 +90,8 @@ In order to run these test yourself you will need to:
 * [Create a new bot](https://discord.com/developers/applications), obtaining the bot token
 * Run the tests with the `TOKEN` and `APPLICATION_ID` environment variables 
 
+Set the `TEST_DEBUG` environment variable in order to enable debug logging in tests.
+
 ### Debugging
 
 If you would rather view the bot activity, then it's also possible to use an existing guild instead of creating and
