@@ -86,7 +86,7 @@ func deleteStaleGuilds() {
 			panic(err)
 		}
 
-		if time.Since(guild.JoinedAt) > 10*time.Minute {
+		if time.Since(guild.JoinedAt) > time.Hour {
 			log.Printf("Deleting stale guild '%s'", guild.ID)
 			if _, err := session.GuildDelete(guild.ID); err != nil {
 				return
