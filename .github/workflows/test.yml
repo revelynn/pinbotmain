@@ -41,9 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: isbang/compose-action@v1.4.1
-        with:
-          compose-file: "./compose.yaml"
+      - name: Docker compose up
+        run: docker compose up -d
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
@@ -68,6 +67,9 @@ jobs:
         env:
           FAKEDISCORD: 1
         run: go test -v ./...
+      - name: Docker logs
+        if: failure()
+        run: docker compose logs
   lint:
     name: lint
     runs-on: ubuntu-latest
