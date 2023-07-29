@@ -17,4 +17,6 @@ FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /pinbot /pinbot
 
+EXPOSE web: ./serve.py --host 0.0.0.0:$PORT 
+
 ENTRYPOINT ["/pinbot"]
